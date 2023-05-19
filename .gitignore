@@ -1,0 +1,17 @@
+﻿################################################################################
+# 此 .gitignore 文件已由 Microsoft(R) Visual Studio 自动创建。
+################################################################################
+
+/.vs
+/BaseTask/obj
+/BaseTask/bin/Debug/netcoreapp3.1
+/ConsoleApp1/obj/Debug/netcoreapp3.1
+/ConsoleApp1/obj
+/LogManager/obj
+/MQManager/obj
+/Node/obj
+/TaskEngine/obj
+/TaskEngineServer/obj
+/TaskNode/obj
+/WebApplication1/bin/Debug/netcoreapp3.1
+/WebApplication1/obj
