@@ -16,3 +16,6 @@
 /WebApplication1/bin/Debug/netcoreapp3.1
 /WebApplication1/obj
 /ConsoleApp1/bin/Debug/netcoreapp3.1
+/LogManager/bin/Debug/netstandard2.0
+/MQManager/bin/Debug/netstandard2.0
+/Node/bin/Debug/netcoreapp3.1
