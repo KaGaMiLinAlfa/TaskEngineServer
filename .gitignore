@@ -3,19 +3,11 @@
 ################################################################################
 
 /.vs
-/BaseTask/obj
-/BaseTask/bin/Debug/netcoreapp3.1
-/ConsoleApp1/obj/Debug/netcoreapp3.1
-/ConsoleApp1/obj
-/LogManager/obj
-/MQManager/obj
-/Node/obj
-/TaskEngine/obj
-/TaskEngineServer/obj
-/TaskNode/obj
-/WebApplication1/bin/Debug/netcoreapp3.1
-/WebApplication1/obj
-/ConsoleApp1/bin/Debug/netcoreapp3.1
-/LogManager/bin/Debug/netstandard2.0
-/MQManager/bin/Debug/netstandard2.0
-/Node/bin/Debug/netcoreapp3.1
+[Dd]ebug/
+[Dd]ebugPublic/
+[Rr]elease/
+[Rr]eleases/
+x64/
+x86/
+[Bb]in/
+[Oo]bj/
