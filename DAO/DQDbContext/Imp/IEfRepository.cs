@@ -1,12 +1,11 @@
-﻿using Model;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
 namespace DAO.DQDbContext.Imp
 {
-    public interface IEfRepository<T> where T : IBaseEntity
+    public interface IEfRepository<T> where T : BaseEntity
     {
         IQueryable<T> GetQueryable();
 

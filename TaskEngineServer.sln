@@ -15,9 +15,11 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MQManager", "MQManager\MQMa
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Comm", "Comm", "{68AACD76-82A4-42AD-965F-0113519637D4}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DAO", "DAO\DAO.csproj", "{5F279929-DAB6-4667-8BDF-EF1D8677430F}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DAO", "DAO\DAO.csproj", "{5F279929-DAB6-4667-8BDF-EF1D8677430F}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Model", "Model\Model.csproj", "{9CEE0071-3991-4520-A077-1ECFB9E0A492}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Model", "Model\Model.csproj", "{9CEE0071-3991-4520-A077-1ECFB9E0A492}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "test", "test\test.csproj", "{568AACBD-B273-497C-8C98-6E1B52FE3B2B}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -53,6 +55,10 @@ Global
 		{9CEE0071-3991-4520-A077-1ECFB9E0A492}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{9CEE0071-3991-4520-A077-1ECFB9E0A492}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{9CEE0071-3991-4520-A077-1ECFB9E0A492}.Release|Any CPU.Build.0 = Release|Any CPU
+		{568AACBD-B273-497C-8C98-6E1B52FE3B2B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{568AACBD-B273-497C-8C98-6E1B52FE3B2B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{568AACBD-B273-497C-8C98-6E1B52FE3B2B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{568AACBD-B273-497C-8C98-6E1B52FE3B2B}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

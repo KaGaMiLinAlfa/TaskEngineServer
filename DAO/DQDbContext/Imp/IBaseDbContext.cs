@@ -1,4 +1,5 @@
-﻿using Model;
+﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Infrastructure;
 using System;
 using System.Collections.Generic;
 using System.Linq.Expressions;
@@ -14,11 +15,11 @@ namespace DAO.DQDbContext.Imp
 
         int SaveChanges();
 
-        int Add<T>(T entity) where T : IBaseEntity;
+        int Add<T>(T entity) where T : BaseEntity;
 
-        int Update<T>(T model, Expression<Func<T, bool>> @where, Expression<Func<T, object>> updateParameters) where T : IBaseEntity;
+        int Update<T>(T model, Expression<Func<T, bool>> @where, Expression<Func<T, object>> updateParameters) where T : BaseEntity;
 
-        int Delete<T>(Expression<Func<T, bool>> @where) where T : IBaseEntity;
+        int Delete<T>(Expression<Func<T, bool>> @where) where T : BaseEntity;
     }
 
 }
