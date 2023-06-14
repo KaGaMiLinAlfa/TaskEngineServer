@@ -32,6 +32,7 @@ namespace Node.Manager
             };
 
             scheduler = new StdSchedulerFactory(config).GetScheduler().Result;
+            scheduler.Start();
         }
 
         public async Task RunAsync()
@@ -41,6 +42,7 @@ namespace Node.Manager
             {
                 try
                 {
+                    Console.WriteLine($"刷新心跳");
                     CheckTaskInfo();
                 }
                 catch (Exception ex)
@@ -49,7 +51,7 @@ namespace Node.Manager
                     await Task.Delay(1000 * 5);
                 }
 
-                await Task.Delay(1000 * 10);
+                await Task.Delay(1000 * 5);
             }
         }
 
@@ -62,7 +64,7 @@ namespace Node.Manager
             UpdateNodeTask();
 
             //3.清理过期的节点DLL文件
-            DeleteOutdatedDLLFiles();
+            //DeleteOutdatedDLLFiles();
 
             //4.节点状态更新
 
@@ -72,7 +74,7 @@ namespace Node.Manager
         {
             var tasks = GetNodeTasksInfo();
             var taskIds = tasks.Select(s => s.Id).ToList();
-            var needAddTaskIds = taskIds.Except(NodeTaskIds).ToList();
+            var needAddTaskIds = taskIds.Except(Worker.Keys).ToList();
             var needStopTaskIds = NodeTaskIds.Except(taskIds).ToList();
 
             if (needAddTaskIds.Count <= 0 && needStopTaskIds.Count <= 0)
@@ -95,7 +97,7 @@ namespace Node.Manager
             var trigger = TriggerBuilder.Create().WithIdentity(newTask.TaskId, NodeId)
                 .WithCronSchedule(newTask.Cron, x => x.WithMisfireHandlingInstructionDoNothing()).Build();
 
-            var taskDllPath = $"{ZipHelper.GetTaskDllPath(newTask.PackageUrl, Path.Combine(DLLSavePath, $"V{newTask.PackageId}"))}-{newTask.Id}";
+            var taskDllPath = $"{ZipHelper.GetTaskDllPath(newTask.PackageUrl, Path.Combine(DLLSavePath, $"V{newTask.PackageId}-{newTask.Id}"))}";
 
             var jobModel = new QuartzModel
             {
@@ -108,7 +110,7 @@ namespace Node.Manager
             //if (string.IsNullOrEmpty(jobModel.TaskDllPath))
             //需要写上上传包没有dll文件的报错日志;
 
-            job.JobDataMap.Put("QuartzModel", newTask);
+            job.JobDataMap.Put("QuartzModel", jobModel);
             Worker.Add(newTask.Id, jobModel);
             scheduler.ScheduleJob(job, trigger);
         }
@@ -139,12 +141,14 @@ namespace Node.Manager
 
         private List<TaskInfo> GetNodeTasksInfo()
         {
-            return new List<TaskInfo>();
+            return DB.FSql.Select<TaskInfo>().Where(x => x.Id > 0).ToList();
+            //return new List<TaskInfo>();
         }
 
         private List<int> GetAllTasksPackageId()
         {
-            return new List<int>();
+            return DB.FSql.Select<TaskInfo>().Where(x => x.Id > 0).ToList(s => s.PackageId);
+            //return new List<int>();
         }
     }
 

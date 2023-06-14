@@ -83,11 +83,19 @@ namespace DAO.DQDbContext.Methods
             return SaveChanges();
         }
 
-        public int Update<T>(T model, Expression<Func<T, bool>> where, Expression<Func<T, object>> updateParameters) where T : BaseEntity
+        public int Add<T>(List<T> entitys) where T : BaseEntity
+        {
+
+            this.BulkInsert(entitys);
+            //base.Add(entity);
+            return SaveChanges();
+        }
+
+
+        public int Update<T>(Expression<Func<T, T>> updateParameters, Expression<Func<T, bool>> where) where T : BaseEntity
         {
             //性能最优推荐原生拼接，需要测试是否能跟随上下文事务
 
-            //this.BulkUpdate
             GetDbSet<T>().Where(where).UpdateFromQuery(updateParameters);
             return 0;
         }
@@ -96,7 +104,7 @@ namespace DAO.DQDbContext.Methods
         {
             //性能最优推荐原生拼接，需要测试是否能跟随上下文事务
 
-            GetDbSet<T>().Where(where).Delete();
+            GetDbSet<T>().Where(where).DeleteFromQuery();
             return 0;
         }
     }

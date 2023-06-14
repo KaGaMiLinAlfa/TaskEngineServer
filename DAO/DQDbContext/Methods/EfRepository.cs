@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Linq.Expressions;
 using System.Text;
 
 namespace DAO.DQDbContext.Methods
@@ -39,6 +40,9 @@ namespace DAO.DQDbContext.Methods
         protected DbSet<T> DbSet => _context.GetDbSet<T>();
 
         public int Add(T entity) => _context.Add(entity);
+        public int Add(List<T> entitys) => _context.Add(entitys);
+        public int Update(Expression<Func<T, T>> updateParameters, Expression<Func<T, bool>> @where) => _context.Update(updateParameters, @where);
+        public int Delete(Expression<Func<T, bool>> where) => _context.Delete(where);
 
         public IQueryable<T> GetQueryable() => DbSet.AsQueryable();
 

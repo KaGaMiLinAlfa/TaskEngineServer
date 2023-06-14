@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Linq.Expressions;
 using System.Text;
 
 namespace DAO.DQDbContext.Imp
@@ -12,6 +13,8 @@ namespace DAO.DQDbContext.Imp
         void DbContext(Action action);
 
         int Add(T entity);
+        int Update(Expression<Func<T, T>> updateParameters, Expression<Func<T, bool>> where);
+        int Delete(Expression<Func<T, bool>> where);
 
 
     }

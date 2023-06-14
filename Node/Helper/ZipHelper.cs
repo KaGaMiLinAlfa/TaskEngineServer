@@ -34,6 +34,10 @@ namespace Node.Helper
             if (copyDllPath != savePath)
                 CopyDirAllFile(copyDllPath, savePath);
 
+            var zipfile = Path.Combine(savePath, Path.GetFileName(url));
+            if (File.Exists(zipfile))
+                File.Delete(zipfile);
+
             return savePath;
         }
 

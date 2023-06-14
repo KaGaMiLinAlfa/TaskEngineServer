@@ -1,15 +1,11 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <OutputType>Exe</OutputType>
     <TargetFramework>netcoreapp3.1</TargetFramework>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="FreeSql.Provider.MySql" Version="3.2.697" />
-  </ItemGroup>
-
-  <ItemGroup>
+    <ProjectReference Include="..\BaseTask\BaseTaskManager.csproj" />
     <ProjectReference Include="..\LogManager\LogManager.csproj" />
   </ItemGroup>
 

@@ -27,14 +27,14 @@ namespace Worker.Controllers
         [HttpGet]
         public string Get()
         {
-            WorkerServices.Build();
+            //WorkerServices.Build();
 
 
             for (int i = 0; i < 5; i++)
             {
                 Task.Run(() =>
                 {
-                    WorkerServices.Run();
+                    //WorkerServices.Run();
                 });
 
             }

@@ -5,6 +5,10 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="FreeSql.Provider.MySql" Version="3.2.697" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\MQManager\MQManager.csproj" />
   </ItemGroup>
 
