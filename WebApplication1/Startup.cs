@@ -35,7 +35,16 @@ namespace Worker
             };
             services.AddSingleton<IFreeSql>(fsql);
 
-
+            services.AddCors(options =>
+            {
+                options.AddPolicy(name: "MyPolicy",
+                                  builder =>
+                                  {
+                                      builder.AllowAnyOrigin()
+                                             .AllowAnyMethod()
+                                             .AllowAnyHeader();
+                                  });
+            });
 
             services.AddControllers();
         }
@@ -47,6 +56,8 @@ namespace Worker
                 app.UseDeveloperExceptionPage();
 
             app.UseRouting();
+
+            app.UseCors("MyPolicy");
 
             //app.UseAuthorization();
 

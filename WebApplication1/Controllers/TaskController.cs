@@ -20,6 +20,9 @@ namespace Worker2.Controllers
 
         #region Query
 
+        [HttpGet]
+        public string test(string val) => val;
+
         /// <summary>
         /// 分页查询Task列表
         /// </summary>
