@@ -29,19 +29,22 @@ namespace Worker2.Controllers
         /// <param name="input"></param>
         /// <returns></returns>
         [HttpGet]
-        public async Task<GlobalResultModel> GetTaskList([FromQuery] PageModel<GetTaskListInModel> input)
+        public async Task<GlobalResultModel> GetTaskList([FromQuery] GetTaskListInModel input)
         {
             var query = _freesql.Select<TaskInfo>();
 
-            //if (!string.IsNullOrEmpty(input?.))
-            //    query = query.Where(x => x.TaskName.Contains(taskName));
+            if (!string.IsNullOrEmpty(input?.TaskName))
+                query = query.Where(x => x.TaskName.Contains(input.TaskName));
 
-            //if (input.Content?.State > 0)
-            //    query = query.Where(x => x.State == input.Content.State);
+            if (!string.IsNullOrEmpty(input?.ClassName))
+                query = query.Where(x => x.TaskName.EndsWith(input.TaskName) || x.ClassPath == input.TaskName);
 
-            var list = query.ToListAsync();
+            if (input.State > 0)
+                query = query.Where(x => x.Stats == input.State);
+
             var total = query.CountAsync();
-
+            var list = query.OrderByDescending(x => x.Id).Page(input.PageIndex, input.PageSize).ToListAsync();
+            
             return new GlobalResultModel { Data = new { Data = await list, Total = await total } };
         }
 

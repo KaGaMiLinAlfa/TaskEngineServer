@@ -26,7 +26,7 @@ namespace Worker2.Comm
         /// <summary>
         /// 开始页
         /// </summary>
-        public int StartIndex { get; set; }
+        public int PageIndex { get; set; }
 
         [BindRequired]
         /// <summary>
@@ -51,7 +51,7 @@ namespace Worker2.Comm
         /// <summary>
         /// 开始页
         /// </summary>
-        public int StartIndex { get; set; }
+        public int PageIndex { get; set; }
 
         [BindRequired]
         /// <summary>
