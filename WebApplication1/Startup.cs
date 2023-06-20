@@ -5,10 +5,12 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Newtonsoft.Json.Serialization;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Worker2.Comm;
 
 namespace Worker
 {
@@ -46,7 +48,20 @@ namespace Worker
                                   });
             });
 
-            services.AddControllers();
+            services.AddControllers(op =>
+            {
+                op.Filters.Add<WebApiExceptionFilterAttribute>();
+            }).AddNewtonsoftJson(configure =>
+            {
+                configure.SerializerSettings.Converters.Add(new DatetimeJsonConverter());
+                configure.SerializerSettings.ContractResolver = new DefaultContractResolver();
+            });
+
+            //禁用默认行为
+            services.Configure<ApiBehaviorOptions>(options =>
+            {
+                options.SuppressModelStateInvalidFilter = true;
+            });
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
