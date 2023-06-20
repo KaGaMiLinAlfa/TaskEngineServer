@@ -17,7 +17,7 @@ namespace Worker2.ApiModel.Task
         /// <summary>
         /// Task状态
         /// </summary>
-        public int State { get; set; }
+        public int[] States { get; set; }
 
     }
 }

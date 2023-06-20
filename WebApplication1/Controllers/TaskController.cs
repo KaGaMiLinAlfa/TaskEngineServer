@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using System.Linq;
 using System.Threading.Tasks;
 using Worker2.ApiModel.Task;
 using Worker2.Comm;
@@ -37,14 +38,14 @@ namespace Worker2.Controllers
                 query = query.Where(x => x.TaskName.Contains(input.TaskName));
 
             if (!string.IsNullOrEmpty(input?.ClassName))
-                query = query.Where(x => x.TaskName.EndsWith(input.TaskName) || x.ClassPath == input.TaskName);
+                query = query.Where(x => x.ClassPath.Contains(input.ClassName) );
 
-            if (input.State > 0)
-                query = query.Where(x => x.Stats == input.State);
+            if (input.States?.Any() ?? false)
+                query = query.Where(x => input.States.Contains(x.Stats));
 
             var total = query.CountAsync();
             var list = query.OrderByDescending(x => x.Id).Page(input.PageIndex, input.PageSize).ToListAsync();
-            
+
             return new GlobalResultModel { Data = new { Data = await list, Total = await total } };
         }
 
