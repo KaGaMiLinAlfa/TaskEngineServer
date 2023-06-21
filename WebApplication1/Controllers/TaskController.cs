@@ -9,6 +9,7 @@ using Worker2.EntityModel;
 
 namespace Worker2.Controllers
 {
+    [ModelValidation]
     [ApiController]
     [Route("api/[controller]/[action]")]
     public class TaskController : ControllerBase
@@ -38,7 +39,7 @@ namespace Worker2.Controllers
                 query = query.Where(x => x.TaskName.Contains(input.TaskName));
 
             if (!string.IsNullOrEmpty(input?.ClassName))
-                query = query.Where(x => x.ClassPath.Contains(input.ClassName) );
+                query = query.Where(x => x.ClassPath.Contains(input.ClassName));
 
             if (input.States?.Any() ?? false)
                 query = query.Where(x => input.States.Contains(x.Stats));
@@ -50,7 +51,16 @@ namespace Worker2.Controllers
         }
 
 
+        [HttpGet]
+        public async Task<GlobalResultModel> GetTaskLog([FromQuery] GetTaskLogModel input)
+        {
+            var query = _freesql.Select<TaskLog>().Where(x => x.TaskId == input.TaskId);
 
+            var total = query.CountAsync();
+            var list = query.OrderByDescending(x => x.Id).Page(input.PageIndex, input.PageSize).ToListAsync();
+
+            return new GlobalResultModel { Data = new { Data = await list, Total = await total } };
+        }
 
 
 

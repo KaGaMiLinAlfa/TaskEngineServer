@@ -47,13 +47,13 @@ namespace Worker2.Comm
 
     public class PageModel
     {
-        [BindRequired]
+        [Range(1, int.MaxValue, ErrorMessage = "页数不能为0或空")]
         /// <summary>
         /// 开始页
         /// </summary>
         public int PageIndex { get; set; }
 
-        [BindRequired]
+        [Range(1, int.MaxValue, ErrorMessage = "分页大小不能为0或空")]
         /// <summary>
         /// 页大小
         /// </summary>
