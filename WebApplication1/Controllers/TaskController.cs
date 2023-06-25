@@ -62,8 +62,55 @@ namespace Worker2.Controllers
             return new GlobalResultModel { Data = new { Data = await list, Total = await total } };
         }
 
+        [HttpGet]
+        public async Task<GlobalResultModel> GetTaskInfo([FromQuery] int id)
+        {
+            var query = _freesql.Select<TaskInfo>().Where(x => x.Id == id).FirstAsync();
+
+            return new GlobalResultModel { Data = await query };
+        }
 
 
+        #endregion
+
+        #region Update
+
+        [HttpPost]
+        public async Task<GlobalResultModel> CreateTask(CreateTaskModel input)
+        {
+            if (string.IsNullOrEmpty(input.Cron))
+                input.Cron = string.Empty;
+
+            var insert = _freesql.Insert(new TaskInfo
+            {
+                TaskName = input.TaskName,
+                DllName = input.DllName,
+                Cron = input.Cron,
+                ClassPath = input.ClassPath,
+                PackageId = input.PackageId,
+
+                Config = string.Empty,
+                Stats = 1,
+            });
+
+            return new GlobalResultModel { Data = await insert.ExecuteIdentityAsync() };
+        }
+
+        [HttpPost]
+        public async Task<GlobalResultModel> ModifyTask(ModifyTaskModel input)
+        {
+            var update = _freesql.Update<TaskInfo>().Set(x => new TaskInfo
+            {
+                TaskName = input.TaskName,
+                DllName = input.DllName,
+                Cron = input.Cron,
+                ClassPath = input.ClassPath,
+                PackageId = input.PackageId,
+
+            }).Where(x => x.Id == input.Id);
+
+            return new GlobalResultModel { Data = await update.ExecuteAffrowsAsync() > 0 };
+        }
 
         #endregion
     }
