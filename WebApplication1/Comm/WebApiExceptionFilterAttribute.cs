@@ -4,6 +4,7 @@ using System.IO;
 using System.Net.Http;
 using System.Text;
 using System;
+using System.Threading.Tasks;
 
 namespace Worker2.Comm
 {
@@ -13,7 +14,7 @@ namespace Worker2.Comm
         /// 重写基类的异常处理方法
         /// </summary>
         /// <param name="actionExecutedContext"></param>
-        public override void OnException(ExceptionContext actionExecutedContext)
+        public override async Task OnExceptionAsync(ExceptionContext actionExecutedContext)
         {
             Exception exception = actionExecutedContext.Exception;
             string url = actionExecutedContext.HttpContext.Request.Scheme + "://" + actionExecutedContext.HttpContext.Request.Host.Value + actionExecutedContext.HttpContext.Request.Path.Value;
@@ -27,16 +28,11 @@ namespace Worker2.Comm
             {
                 try
                 {
-                    actionExecutedContext.HttpContext.Request.Body.Position = 0;
-                    var stream = actionExecutedContext.HttpContext.Request.Body;
-                    long? length = actionExecutedContext.HttpContext.Request.ContentLength;
-                    if (length != null && length > 0)
-                    {
-                        // 使用这个方式读取，并且使用异步
-                        StreamReader streamReader = new StreamReader(stream, Encoding.UTF8);
-                        queryStr = streamReader.ReadToEndAsync().GetAwaiter().GetResult();
-                    }
-                    actionExecutedContext.HttpContext.Request.Body.Position = 0;
+                    var request = actionExecutedContext.HttpContext.Request;
+
+                    var requestBody = "";
+                    using (var reader = new StreamReader(request.Body))
+                        requestBody = await reader.ReadToEndAsync();
                 }
                 catch (Exception ex)
                 {
@@ -47,7 +43,8 @@ namespace Worker2.Comm
             response.Code = 500;
             response.Msg = actionExecutedContext.Exception.Message;
 
-            actionExecutedContext.Result = new JsonResult(response);
+
+            actionExecutedContext.Result = new JsonResult(response) { StatusCode = 500 };
             base.OnException(actionExecutedContext);
         }
     }

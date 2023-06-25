@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -75,6 +76,14 @@ namespace Worker
             app.UseCors("MyPolicy");
 
             //app.UseAuthorization();
+
+            app.Use(next => new RequestDelegate(
+                async context =>
+                {
+                    context.Request.EnableBuffering();
+                    await next(context);
+                }));
+
 
             app.UseEndpoints(endpoints =>
             {
