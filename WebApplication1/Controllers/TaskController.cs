@@ -1,4 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using System.Collections.Generic;
+using System.Configuration;
 using System.Linq;
 using System.Threading.Tasks;
 using Worker2.ApiModel.Task;
@@ -9,10 +11,8 @@ using Worker2.EntityModel;
 
 namespace Worker2.Controllers
 {
-    [ModelValidation]
-    [ApiController]
-    [Route("api/[controller]/[action]")]
-    public class TaskController : ControllerBase
+
+    public class TaskController : BaseController
     {
         private readonly IFreeSql _freesql;
         public TaskController(IFreeSql freeSql)
@@ -22,8 +22,7 @@ namespace Worker2.Controllers
 
         #region Query
 
-        [HttpGet]
-        public string test(string val) => val;
+
 
         /// <summary>
         /// 分页查询Task列表
@@ -111,6 +110,44 @@ namespace Worker2.Controllers
 
             return new GlobalResultModel { Data = await update.ExecuteAffrowsAsync() > 0 };
         }
+
+        private readonly static Dictionary<TaskStats, TaskStats[]> TaskStatsMap = new Dictionary<TaskStats, TaskStats[]>()
+        {
+            { TaskStats.Stopped,new TaskStats[]{ TaskStats.PendingStart } },
+            { TaskStats.Idle,new TaskStats[]{ TaskStats.WaitingToStop } },
+            { TaskStats.Running,new TaskStats[]{ TaskStats.WaitingToStop}},
+            { TaskStats.WaitingToStop,new TaskStats[]{ TaskStats.Aborting }},
+            { TaskStats.Aborting,new TaskStats[]{}},
+            { TaskStats.PendingStart ,new TaskStats[]{TaskStats.WaitingToStop}},
+        };
+
+        [HttpPost]
+        public async Task<ActionResult<bool>> ModifyTaskStats(ModifyTaskStats input)
+        {
+            var targetStatus = (TaskStats)input.TargetStatus;
+            if (!TaskStatsMap.ContainsKey((TaskStats)input.TargetStatus))
+                return ParameterError($"目标状态错误! 目标状态:{targetStatus.GetDescription()}不是约定的状态");
+
+            var taskStats = (TaskStats)_freesql.Select<TaskInfo>().Where(x => x.Id == input.TaskId).First(s => s.Stats);
+            if (taskStats <= 0)
+                return ParameterError($"TaskId[{input.TaskId}]不存在或Task当前状态错误!");
+
+            if (!TaskStatsMap[taskStats].Contains(targetStatus))
+                return ParameterError($"当前任务状态为 [{taskStats.GetDescription()}] ,不能转到 [{targetStatus.GetDescription()}] 状态");
+
+            var update = _freesql.Update<TaskInfo>().Set(x => new TaskInfo
+            {
+                Stats = (int)targetStatus
+            }).Where(x => x.Id == input.TaskId);
+
+            var operationResult = await update.ExecuteAffrowsAsync() > 0;
+
+            if (operationResult)
+                return Success(true);
+
+            return OperationError("修改状态失败!");
+        }
+
 
         #endregion
     }

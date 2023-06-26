@@ -10,7 +10,7 @@ namespace Worker2.Comm
     public class GlobalResultModel
     {
         public int Code { get; set; }
-        public string Msg { get; set; }
+        public string Message { get; set; }
         public object Data { get; set; }
     }
 

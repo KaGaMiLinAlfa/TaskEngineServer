@@ -41,7 +41,7 @@ namespace Worker2.Comm
             }
             var response = new GlobalResultModel();
             response.Code = 500;
-            response.Msg = actionExecutedContext.Exception.Message;
+            response.Message = actionExecutedContext.Exception.Message;
 
 
             actionExecutedContext.Result = new JsonResult(response) { StatusCode = 500 };

@@ -25,7 +25,7 @@ namespace Worker2.Comm
                     }
                 }
 
-                var response = new GlobalResultModel() { Code = 500, Msg = error };
+                var response = new GlobalResultModel() { Code = 500, Message = error };
 
                 context.Result = new JsonResult(response) { StatusCode = 500 };
 
