@@ -1,4 +1,5 @@
 ﻿using FreeSql.DataAnnotations;
+using System;
 
 namespace Node.Model
 {
@@ -40,7 +41,7 @@ namespace Node.Model
         /// <summary>
         /// ftp上传包地址
         /// </summary>
-        [Column(IsNullable = false, StringLength = 255)] 
+        [Column(IsNullable = false, StringLength = 255)]
         public string PackageUrl { get; set; }
 
         /// <summary>
@@ -50,9 +51,11 @@ namespace Node.Model
         public int PackageId { get; set; }
 
         /// <summary>
-        /// 运行状态 1:停止 2:待机中 3:执行中 4:等待停止 5:正在中止 
+        /// 运行状态 1:停止 2:待机中 3:执行中 4:等待停止 5:正在中止 6:待启动
         /// </summary>
         [Column(IsNullable = false)]
         public int Stats { get; set; }
+
+        public DateTime LastHeartbeatTime { get; set; }
     }
 }

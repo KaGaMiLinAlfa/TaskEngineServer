@@ -16,34 +16,14 @@ namespace test
         //server=localhost;port=3306;database=TaskDB;uid=root;pwd=123123;
         static void Main(string[] args)
         {
-            LogHelper.Debug("Task测试", null);
-            Console.WriteLine($"args:{string.Join(",", args)}");
-
-            //var items = new List<TaskInfo>();
-            //for (var a = 0; a < 10; a++)
-            //    items.Add(new TaskInfo
-            //    {
-            //        TaskName = $"newtitle{a}",
+            Environment.SetEnvironmentVariable("MyVariable", "MyValue", EnvironmentVariableTarget.Process);
 
 
-            //    });
+            string value = Environment.GetEnvironmentVariable("MyVariable", EnvironmentVariableTarget.Process);
 
-            ////Console.WriteLine(fsql.Insert(items).ExecuteAffrows());
 
-            //fsql.Update<TaskInfo>()
-            //    .Where(x => x.Id == 25)
-            //    .Set(x => new TaskInfo
-            //    {
-            //        TaskName = "freesqltest",
 
-            //    }).ExecuteAffrows();
-
-            Console.WriteLine(Process.GetCurrentProcess().MainModule.FileName);
-
-            string dllPath = Assembly.GetExecutingAssembly().Location;
-            Console.WriteLine(dllPath);
-
-            Console.WriteLine(fsql.CodeFirst.GetComparisonDDLStatements<TaskInfo>());
+            Console.WriteLine("over");
         }
 
         static IFreeSql fsql = new FreeSql.FreeSqlBuilder()

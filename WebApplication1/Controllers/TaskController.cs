@@ -69,6 +69,15 @@ namespace Worker2.Controllers
             return new GlobalResultModel { Data = await query };
         }
 
+        [HttpGet]
+        public async Task<ActionResult> GetTaskStats([FromQuery] int[] id)
+        {
+            if (id.Length <= 0)
+                return SuccessObj(new int[0]);
+
+            var query = _freesql.Select<TaskInfo>().Where(x => id.Contains(x.Id)).ToListAsync(s => new { s.Id, s.Stats });
+            return SuccessObj(await query);
+        }
 
         #endregion
 

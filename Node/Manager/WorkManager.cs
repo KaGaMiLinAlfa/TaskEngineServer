@@ -1,14 +1,17 @@
 ﻿using BaseTaskManager;
+using Node.Helper;
 using Node.Model;
 using Quartz;
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using System.Reflection;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
-
 
 namespace Node.Manager
 {
@@ -17,67 +20,70 @@ namespace Node.Manager
     {
 
         private QuartzModel quartzModel;
+        private IExecutePackageAction _executer;
 
         public async Task Execute(IJobExecutionContext context)
         {
             quartzModel = context.JobDetail.JobDataMap.Get("QuartzModel") as QuartzModel;
+
+            //如果需要停止的话,则下次不能再执行了
+            if (quartzModel.IsStop || quartzModel.WaitingToStop || quartzModel.NeedAbort)
+                return;
+
+            //开启心跳
+            if (quartzModel.timer == null)
+                quartzModel.timer = new System.Threading.Timer(TaskHeartbeatTime, new AutoResetEvent(false), 1000, 5000);
+
             await Console.Out.WriteLineAsync($"Pahe:{quartzModel.TaskDllPath}->{DateTime.Now}:任务开始 -- Name = {quartzModel.TaskInfo.TaskName}");
 
 
-            IExecutePackageAction Executer = new ChiProcess();
+            _executer = new ChiProcess();
 
             var dllfilepath = Path.Combine(quartzModel.TaskDllPath, quartzModel.TaskInfo.DllName);
 
-            Executer.SetPath(dllfilepath, quartzModel.TaskInfo.ClassPath, quartzModel.Config);
+            _executer.SetPath(quartzModel.TaskInfo.Id.ToString(), dllfilepath, quartzModel.TaskInfo.ClassPath, quartzModel.Config);
 
 
 
-
-            //Executer.Execute(quartzModel.TaskInfo);
+            _executer.Execute(quartzModel.TaskInfo);
 
             Console.WriteLine("BaseTask结束锚点");
         }
-    }
 
-    #region 反射
-    public class AssemblyInstantiation : IExecutePackageAction
-    {
-        string _dllPath, _className;
-
-        public AssemblyInstantiation()
+        private void TaskHeartbeatTime(object sender)
         {
+            Console.WriteLine("Worker Heartbeat");
 
-        }
+            var update = DB.FSql.Update<TaskInfo>()
+                .Set(x => x.LastHeartbeatTime == DateTime.Now)
+                .Where(x => x.Id == quartzModel.TaskInfo.Id)
+                .ExecuteAffrows();
+
+            if (quartzModel.NeedAbort)
+            {
+                Console.WriteLine($"{quartzModel.TaskInfo.Id} 收到中止信号,执行中止");
+                _executer.Cancel();
+                quartzModel.IsStop = true;
+                if (quartzModel.timer != null)
+                    quartzModel.timer.Dispose();
+
+                return;
+            }
+
+            if (quartzModel.WaitingToStop)
+                Console.WriteLine($"{quartzModel.TaskInfo.Id} 收到停止信号,等待停止");
+
+            if (quartzModel.WaitingToStop && !_executer.IsRunning)
+            {
+                Console.WriteLine($"{quartzModel.TaskInfo.Id} 已执行完毕,停止操作");
+                quartzModel.IsStop = true;
+                if (quartzModel.timer != null)
+                    quartzModel.timer.Dispose();
+            }
 
 
-        public void Execute(TaskInfo taskInfoMode)
-        {
-            var assembly = Assembly.LoadFrom(_dllPath);// dll路径
-            var type = assembly.GetType(taskInfoMode.ClassPath); // 获取该dll中命名空间类
-            object obj = Activator.CreateInstance(type, new object[] { taskInfoMode });// 实例化该类
-            if (!(obj is BaseTask))
-                throw new Exception("错误类型!");
-
-            (obj as BaseTask).Run();
-        }
-
-
-
-
-
-        public void SetPath(string dllPath, string className, string config)
-        {
-            _dllPath = dllPath;
-            _className = className;
-        }
-
-        public void Cancel()
-        {
-            throw new NotImplementedException();
         }
     }
-    #endregion
-
 
     public class ChiProcess : IExecutePackageAction
     {
@@ -85,8 +91,34 @@ namespace Node.Manager
         string _arguments;
         string _nodeTaskPath;
 
+        public bool IsRunning { get; set; }
+
         public void Execute(TaskInfo taskInfoMode)
         {
+            if (taskInfoMode.Stats != 2)
+            {
+                Console.WriteLine("状态检查异常停止当前周期执行");
+                return;
+            }
+
+
+
+            IsRunning = true;
+
+            taskInfoMode.Stats = 3;
+            var update = DB.FSql.Update<TaskInfo>()
+                  .Set(x => x.LastHeartbeatTime == DateTime.Now)
+                  .Set(x => x.Stats == 3)
+                  .Where(x => x.Id == taskInfoMode.Id && x.Stats == 2)
+                  .ExecuteAffrows();
+
+            if (update <= 0)
+            {
+                Console.WriteLine("更新状态失败");
+                return;
+            }
+
+
             Console.WriteLine($"_arguments:{_arguments}");
             TaskProcess = new Process();
             TaskProcess.StartInfo.FileName = @"dotnet";
@@ -94,31 +126,46 @@ namespace Node.Manager
             TaskProcess.Start();
 
             TaskProcess.WaitForExit();
+
+
+            taskInfoMode.Stats = 2;
+            DB.FSql.Update<TaskInfo>()
+                .Set(x => x.LastHeartbeatTime == DateTime.Now)
+                .Set(x => x.Stats == 2)
+                .Where(x => x.Id == taskInfoMode.Id && x.Stats == 3)
+                .ExecuteAffrows();
+
+            IsRunning = false;
         }
 
         public void Cancel()
         {
             TaskProcess.Kill();
+            IsRunning = false;
         }
 
-        public void SetPath(string dllPath, string className, string config)
+        public void SetPath(string taskid, string dllPath, string className, string config)
         {
-
-
             _nodeTaskPath = Assembly.GetExecutingAssembly().Location;
             //_arguments = @$"{_nodeTaskPath} Worker ""{dllPath}"" ""{className}"" ""{config}""";
-            _arguments = @$"{_nodeTaskPath} Worker ""{dllPath}"" ""{className}""";
+            _arguments = @$"{_nodeTaskPath} Worker ""{taskid}"" ""{dllPath}"" ""{className}""";
         }
 
-        public static void RunTask(string dllPath, string className, string config)
+        public static void RunTask(string taskid, string dllPath, string className, string config)
         {
+
             var assembly = Assembly.LoadFrom(dllPath);// dll路径
             var type = assembly.GetType(className); // 获取该dll中命名空间类
             object obj = Activator.CreateInstance(type);// 实例化该类
             if (!(obj is BaseTask))
                 throw new Exception("错误类型!");
 
-            (obj as BaseTask).Run();
+            var baseTask = (obj as BaseTask);
+
+            baseTask.TaskId = int.Parse(taskid);
+
+            baseTask.Init();
+            baseTask.Run();
 
             Console.WriteLine("Worker结束锚点");
         }
@@ -131,6 +178,8 @@ namespace Node.Manager
 
         public void Cancel();
 
-        public void SetPath(string dllPath, string className, string config);
+        public void SetPath(string taskid, string dllPath, string className, string config);
+
+        public bool IsRunning { get; set; }
     }
 }

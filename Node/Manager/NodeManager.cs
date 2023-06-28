@@ -3,6 +3,7 @@ using Node.Model;
 using Quartz;
 using Quartz.Impl;
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.IO;
@@ -11,6 +12,8 @@ using System.Security.Policy;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using static FreeSql.Internal.GlobalFilter;
+
 
 namespace Node.Manager
 {
@@ -73,21 +76,81 @@ namespace Node.Manager
         private void UpdateNodeTask()
         {
             var tasks = GetNodeTasksInfo();
-            var taskIds = tasks.Select(s => s.Id).ToList();
-            var needAddTaskIds = taskIds.Except(Worker.Keys).ToList();
-            var needStopTaskIds = NodeTaskIds.Except(taskIds).ToList();
 
-            if (needAddTaskIds.Count <= 0 && needStopTaskIds.Count <= 0)
-                return;
+            //装载本节点"待启动"的Worker
+            var pendingStartTask = tasks.Where(x => x.Stats == 6);
+            foreach (var item in pendingStartTask)
+                if (!Worker.Keys.Contains(item.Id))
+                    AddJob(item);
 
-            if (needStopTaskIds.Any())
-                foreach (var item in needStopTaskIds)
-                    if (!Worker.ContainsKey(item))
-                        RemoveJob(Worker[tasks.First(x => x.Id == item).Id]);
+            //通知Worker停止或中止任务
+            var stopTask = tasks.Where(x => new int[] { 4, 5 }.Contains(x.Stats) && Worker.Keys.Contains(x.Id));
+            foreach (var item in stopTask)
+                switch (item.Stats)
+                {
+                    case 4: Worker[item.Id].WaitingToStop = true; UnInstallWorker(item); break;
+                    case 5: Worker[item.Id].NeedAbort = true; UnInstallWorker(item); break;
+                }
 
-            if (needAddTaskIds.Any())
-                foreach (var item in needAddTaskIds)
-                    AddJob(tasks.First(x => x.Id == item));
+            //卸载Worker已经停止的任务
+            foreach (var item in Worker)
+                if (item.Value.IsStop)
+                    RemoveJob(Worker[item.Value.TaskInfo.Id]);
+
+            //卸载状态为已停止容器(道理来说,不会存在这样的task,页面操作需要等待子程序结束后,再轮询卸载worker,除非改数据库大面积停止)
+            var unInstallTask = tasks.Where(x => x.Stats == 1 && Worker.Keys.Contains(x.Id));
+            foreach (var item in unInstallTask)
+                Worker[item.Id].WaitingToStop = true;
+
+            //停止不是本节点的task(道理来说,节点不会包含其他节点任务-非停止状态的task不能修改节点,节点自会启动本节点"待启动"的任务)
+            var otherNodeTask = Worker.Keys.Except(tasks.Select(s => s.Id)).ToList();
+            foreach (var item in otherNodeTask)
+                Worker[item].WaitingToStop = true;
+
+
+            foreach (var item in Worker)
+                Console.WriteLine($"任务ID: {item.Key} 为 {item.Value.TaskInfo.Stats} 状态");
+
+
+            //WaitingToStop
+            //Aborting
+
+            //var taskIds = tasks.Select(s => s.Id).ToList();
+
+
+            //var needAddTaskIds = pendingStartTaskIds.Except(Worker.Keys).ToList();
+
+
+            //var needStopTaskIds = Worker.Keys.Except(taskIds).ToList();
+
+            //if (needAddTaskIds.Count <= 0 && needStopTaskIds.Count <= 0)
+            //    return;
+
+            //if (needStopTaskIds.Any())
+            //    foreach (var item in needStopTaskIds)
+            //        if (!Worker.ContainsKey(item))
+            //            RemoveJob(Worker[tasks.First(x => x.Id == item).Id]);
+
+            //if (needAddTaskIds.Any())
+            //    foreach (var item in needAddTaskIds)
+            //        AddJob(tasks.First(x => x.Id == item));
+
+        }
+
+        public void UnInstallWorker(TaskInfo taskInfo)
+        {
+            switch (taskInfo.Stats)
+            {
+                case 4: Worker[taskInfo.Id].WaitingToStop = true; break;
+                case 5: Worker[taskInfo.Id].NeedAbort = true; break;
+            }
+
+            if (Worker[taskInfo.Id].TaskInfo.Stats == 2)
+            {
+                RemoveJob(Worker[taskInfo.Id]);
+            }
+
+
 
         }
 
@@ -113,6 +176,14 @@ namespace Node.Manager
             job.JobDataMap.Put("QuartzModel", jobModel);
             Worker.Add(newTask.Id, jobModel);
             scheduler.ScheduleJob(job, trigger);
+
+            Console.WriteLine($"装载任务:{newTask.Id}");
+
+            newTask.Stats = 2;
+            DB.FSql.Update<TaskInfo>().Set(x => new TaskInfo
+            {
+                Stats = 2,
+            }).Where(x => x.Id == newTask.Id && x.Stats == 6).ExecuteAffrows();
         }
 
         public void RemoveJob(QuartzModel quartzModel)
@@ -124,7 +195,14 @@ namespace Node.Manager
             scheduler.Interrupt(quartzModel.Job.Key);
             Task.WaitAll(task1, task2, task3);
 
+            if (quartzModel.timer != null)
+                quartzModel.timer.Dispose();
+
             Worker.Remove(quartzModel.TaskInfo.Id);
+
+            Console.WriteLine($"卸载任务:{quartzModel.TaskInfo.Id}");
+
+            UpdateTaskStats(quartzModel.TaskInfo.Id, 1);
         }
 
         private void DeleteOutdatedDLLFiles()
@@ -141,7 +219,7 @@ namespace Node.Manager
 
         private List<TaskInfo> GetNodeTasksInfo()
         {
-            return DB.FSql.Select<TaskInfo>().Where(x => x.Id > 0).ToList();
+            return DB.FSql.Select<TaskInfo>().Where(x => x.Id == 1).ToList();
             //return new List<TaskInfo>();
         }
 
@@ -149,6 +227,13 @@ namespace Node.Manager
         {
             return DB.FSql.Select<TaskInfo>().Where(x => x.Id > 0).ToList(s => s.PackageId);
             //return new List<int>();
+        }
+        private void UpdateTaskStats(int id, int stats)
+        {
+            DB.FSql.Update<TaskInfo>().Set(x => new TaskInfo
+            {
+                Stats = stats,
+            }).Where(x => x.Id == id).ExecuteAffrows();
         }
     }
 
@@ -166,6 +251,14 @@ namespace Node.Manager
 
         public TaskInfo TaskInfo { get; set; }
         public bool IsRun { get; set; }
+
+
+        public bool WaitingToStop { get; set; }
+        public bool NeedAbort { get; set; }
+
+        public bool IsStop { get; set; }
+
+        public System.Threading.Timer timer { get; set; }
     }
 
 }

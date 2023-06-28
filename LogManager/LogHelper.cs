@@ -8,6 +8,7 @@ namespace LogManager
 
     public enum LogLevel
     {
+        _,
         Debug,
         Info,
         Warn,
@@ -26,6 +27,23 @@ namespace LogManager
     }
     public class LogHelper
     {
+        static LogHelper()
+        {
+            Console.WriteLine("Log初始化");
+            var taskIdStr = Environment.GetEnvironmentVariable("TaskId");
+
+            if (!string.IsNullOrEmpty(taskIdStr))
+                TaskId = int.Parse(taskIdStr);
+        }
+
+        public static void Init()
+        {
+
+        }
+
+
+        public static int TaskId { get; set; }
+
         static string connectionString = "server=localhost;port=3306;database=TaskDB;uid=root;pwd=123123;";
 
         static IFreeSql fsql = new FreeSql.FreeSqlBuilder()
@@ -42,7 +60,8 @@ namespace LogManager
                 //Objects = objs
 
                 NodeId = 0,
-                TaskId = 0,
+                TaskId = TaskId,
+                LogTime = DateTime.Now
             };
 
             var zxc = fsql.Insert(msgObj).ExecuteAffrows();

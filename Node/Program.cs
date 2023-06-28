@@ -18,7 +18,7 @@ namespace Node
 
             await Console.Out.WriteLineAsync($"args:{string.Join(",", args)}");
             if (args.FirstOrDefault() == "Worker")
-                ChiProcess.RunTask(args[1], args[2], "");
+                ChiProcess.RunTask(args[1], args[2],  args[3],"");
             else
                 await new NodeManager().RunAsync();
 
