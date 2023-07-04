@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using System;
 using System.Collections.Generic;
 using System.Configuration;
 using System.Linq;
@@ -54,6 +55,18 @@ namespace Worker2.Controllers
         public async Task<GlobalResultModel> GetTaskLog([FromQuery] GetTaskLogModel input)
         {
             var query = _freesql.Select<TaskLog>().Where(x => x.TaskId == input.TaskId);
+
+            if (input.StartTime.Year > 2000)
+                query = query.Where(x => x.LogTime >= input.StartTime);
+
+            if (input.EndTime.Year > 2000)
+                query = query.Where(x => x.LogTime <= input.EndTime);
+
+            if (input.LogLevels?.Any() ?? false)
+                query = query.Where(x => input.LogLevels.Contains(x.Level));
+
+            if (!string.IsNullOrEmpty(input.Content))
+                query = query.Where(x => input.Content.Contains(x.Message));
 
             var total = query.CountAsync();
             var list = query.OrderByDescending(x => x.Id).Page(input.PageIndex, input.PageSize).ToListAsync();
