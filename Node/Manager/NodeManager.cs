@@ -3,7 +3,6 @@ using Node.Model;
 using Quartz;
 using Quartz.Impl;
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.IO;
@@ -12,8 +11,6 @@ using System.Security.Policy;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
-using static FreeSql.Internal.GlobalFilter;
-
 
 namespace Node.Manager
 {
@@ -110,30 +107,6 @@ namespace Node.Manager
 
             foreach (var item in Worker)
                 Console.WriteLine($"任务ID: {item.Key} 为 {item.Value.TaskInfo.Stats} 状态");
-
-
-            //WaitingToStop
-            //Aborting
-
-            //var taskIds = tasks.Select(s => s.Id).ToList();
-
-
-            //var needAddTaskIds = pendingStartTaskIds.Except(Worker.Keys).ToList();
-
-
-            //var needStopTaskIds = Worker.Keys.Except(taskIds).ToList();
-
-            //if (needAddTaskIds.Count <= 0 && needStopTaskIds.Count <= 0)
-            //    return;
-
-            //if (needStopTaskIds.Any())
-            //    foreach (var item in needStopTaskIds)
-            //        if (!Worker.ContainsKey(item))
-            //            RemoveJob(Worker[tasks.First(x => x.Id == item).Id]);
-
-            //if (needAddTaskIds.Any())
-            //    foreach (var item in needAddTaskIds)
-            //        AddJob(tasks.First(x => x.Id == item));
 
         }
 

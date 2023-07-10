@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
+using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 
 namespace Worker2.Comm
@@ -12,6 +13,13 @@ namespace Worker2.Comm
         public int Code { get; set; }
         public string Message { get; set; }
         public object Data { get; set; }
+    }
+
+    public class ListResultModel<T>
+    {
+        public List<T> List { get; set; }
+
+        public long Total { get; set; }
     }
 
 

@@ -1,11 +1,13 @@
 ﻿
 using FreeSql.DataAnnotations;
 using LogManager;
+using SDK.MiDuo.CodeService;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Diagnostics;
 using System.Reflection;
+using Task.CodeHandle;
 
 namespace test
 {
@@ -16,12 +18,8 @@ namespace test
         //server=localhost;port=3306;database=TaskDB;uid=root;pwd=123123;
         static void Main(string[] args)
         {
-            Environment.SetEnvironmentVariable("MyVariable", "MyValue", EnvironmentVariableTarget.Process);
 
-
-            string value = Environment.GetEnvironmentVariable("MyVariable", EnvironmentVariableTarget.Process);
-
-
+            new CodeHandleService().Handle();
 
             Console.WriteLine("over");
         }

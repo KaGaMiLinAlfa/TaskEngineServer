@@ -36,12 +36,6 @@ namespace LogManager
                 TaskId = int.Parse(taskIdStr);
         }
 
-        public static void Init()
-        {
-
-        }
-
-
         public static int TaskId { get; set; }
 
         static string connectionString = "server=localhost;port=3306;database=TaskDB;uid=root;pwd=123123;";
