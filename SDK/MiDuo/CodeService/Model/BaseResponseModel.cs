@@ -35,4 +35,10 @@ namespace SDK.MiDuo.CodeService.Model
         /// </summary>
         public T parameter { get; set; }
     }
+
+    public class ImportFileResult
+    {
+        public int sucCount { get; set; }
+        public int errCount { get; set; }
+    }
 }

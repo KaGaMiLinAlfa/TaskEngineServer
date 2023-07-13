@@ -35,9 +35,9 @@ namespace SDK.MiDuo.CodeService
             return Post<ValidateCodeResponse>(OnlineDomain + "/api/v2/Validate/CheckCode", new { IP = "123", Code = code });
         }
 
-        public static BaseResponseModelV1<ValidateCodeResponse> ImportFangcuanRelation(ImportRelationRequest request)
+        public static BaseResponseModelV1<ImportFileResult> ImportFangcuanRelation(ImportRelationRequest request)
         {
-            return PostV1<ValidateCodeResponse>(OnlineDomain + "/api/v1/CodeImport/ImportFangcuanRelation", request);
+            return PostV1<ImportFileResult>(OnlineDomain + "/api/v1/CodeImport/ImportFangcuanRelation", request);
         }
 
 

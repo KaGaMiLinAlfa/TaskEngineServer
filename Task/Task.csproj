@@ -10,6 +10,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\BaseTask\BaseTaskManager.csproj" />
+    <ProjectReference Include="..\LogManager\LogManager.csproj" />
     <ProjectReference Include="..\SDK\SDK.csproj" />
   </ItemGroup>
 
