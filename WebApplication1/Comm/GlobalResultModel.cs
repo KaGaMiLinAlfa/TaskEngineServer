@@ -15,6 +15,20 @@ namespace Worker2.Comm
         public object Data { get; set; }
     }
 
+    public class GlobalResultModel<T>
+    {
+        public int Code { get; set; }
+        public string Message { get; set; }
+        public object Data { get; set; }
+
+        public static implicit operator GlobalResultModel<T>(T value)
+        {
+            return new GlobalResultModel<T> { Data = value };
+        }
+    }
+
+
+
     public class ListResultModel<T>
     {
         public List<T> List { get; set; }

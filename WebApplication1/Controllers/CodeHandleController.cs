@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Threading.Tasks;
+using Worker2.ApiModel.CodeHandle;
 using Worker2.Comm;
 using Worker2.EntityModel;
 
@@ -34,6 +35,25 @@ namespace Worker2.Controllers
         #endregion
 
         #region Update
+
+        [HttpPost]
+        public async Task<long> CreateCodeHandle(CreateCodeHandleModel input)
+        {
+
+            var id = _freesql.Insert(new CodeHandle
+            {
+                Name = input.Name,
+                CreateTime = DateTime.Now,
+                CodeType = input.CodeType,
+                Stats = 1,
+                HandlePackPath = input.HandlePackPath
+            }).ExecuteIdentityAsync();
+
+
+            return await id;
+        }
+
+
         #endregion
 
 

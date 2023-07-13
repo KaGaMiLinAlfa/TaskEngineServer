@@ -1,14 +1,10 @@
 ﻿using System;
-using System.ComponentModel.DataAnnotations;
 
-namespace Worker2.EntityModel
+namespace Worker2.ApiModel.CodeHandle
 {
-    public class CodeHandle
+    public class CreateCodeHandleModel
     {
-        [Key]
-        public int Id { get; set; }
         public string Name { get; set; }
-        public DateTime CreateTime { get; set; }
 
         public int CodeType { get; set; }
 
