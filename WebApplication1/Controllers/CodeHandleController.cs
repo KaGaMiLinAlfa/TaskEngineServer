@@ -1,10 +1,12 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Threading.Tasks;
 using Worker2.ApiModel.CodeHandle;
+using Worker2.ApiModel.Task;
 using Worker2.Comm;
 using Worker2.EntityModel;
 
@@ -24,13 +26,38 @@ namespace Worker2.Controllers
         #region Query
 
         [HttpGet]
-        public async Task<GlobalResultModel> GetCodeHandleList()
+        public async Task<ListResultModel<CodeHandle>> GetCodeHandleList([FromQuery] GetTaskListInModel input)
         {
-            var list = _freesql.Select<CodeHandle>().ToListAsync();
-            var total = _freesql.Select<CodeHandle>().CountAsync();
+            var query = _freesql.Select<CodeHandle>();
 
-            return new GlobalResultModel { Code = 200, Data = new ListResultModel<CodeHandle> { List = await list, Total = await total } };
+
+            var list = query.OrderByDescending(x => x.Id).Page(input.PageIndex, input.PageSize).ToListAsync();
+            var total = query.CountAsync();
+
+            return new ListResultModel<CodeHandle> { List = await list, Total = await total };
         }
+
+
+        [HttpGet]
+        public async Task<CodeHandle> GetCodeHandleInfo([FromQuery] int id)
+        {
+            var query = _freesql.Select<CodeHandle>().Where(x => x.Id == id).FirstAsync();
+
+            return await query;
+        }
+
+        [HttpGet]
+        public async Task<GlobalResultModel> GetTaskLog([FromQuery] int handleId)
+        {
+            var query = _freesql.Select<CodeHandleLog>().Where(x => x.HandleId == handleId);
+
+
+            var total = query.CountAsync();
+            var list = query.OrderBy(x => x.Id).ToListAsync();
+
+            return new GlobalResultModel { Data = new { Data = await list, Total = await total } };
+        }
+
 
         #endregion
 
@@ -53,6 +80,22 @@ namespace Worker2.Controllers
             return await id;
         }
 
+        [HttpPost]
+        public async Task<long> ModifyCodeHandle(CreateCodeHandleModel input)
+        {
+
+            var updateCount = _freesql.Update<CodeHandle>().Set(x => new CodeHandle
+            {
+                Name = input.Name,
+                CodeType = input.CodeType,
+                Stats = 1,
+                HandlePackPath = input.HandlePackPath
+            }).Where(x => x.Id == input.Id).ExecuteAffrowsAsync();
+
+
+            return await updateCount;
+        }
+
 
         #endregion
 
@@ -60,21 +103,20 @@ namespace Worker2.Controllers
         #region Other
 
         [HttpPost]
-        public async Task<IActionResult> Upload(IFormFile file)
+        public async Task<GlobalResultModel<string>> Upload(IFormFile file)
         {
             if (file == null || file.Length == 0)
-                return BadRequest("No file selected.");
+                throw new Exception("获取文件失败");
 
             var uploadsFolderPath = Path.Combine(AppContext.BaseDirectory, "uploads");
             if (!Directory.Exists(uploadsFolderPath))
                 Directory.CreateDirectory(uploadsFolderPath);
 
-
             var filePath = Path.Combine(uploadsFolderPath, $"{DateTime.Now:yyyyMMdd-HHmmss}-{file.FileName}");
             using (var fileStream = new FileStream(filePath, FileMode.Create))
                 await file.CopyToAsync(fileStream);
 
-            return Ok("File uploaded successfully.");
+            return filePath;
         }
 
         #endregion

@@ -31,7 +31,7 @@ namespace Worker2.Controllers
         /// <param name="input"></param>
         /// <returns></returns>
         [HttpGet]
-        public async Task<GlobalResultModel> GetTaskList([FromQuery] GetTaskListInModel input)
+        public async Task<ListResultModel<TaskInfo>> GetTaskList([FromQuery] GetTaskListInModel input)
         {
             var query = _freesql.Select<TaskInfo>();
 
@@ -47,12 +47,12 @@ namespace Worker2.Controllers
             var total = query.CountAsync();
             var list = query.OrderByDescending(x => x.Id).Page(input.PageIndex, input.PageSize).ToListAsync();
 
-            return new GlobalResultModel { Data = new { Data = await list, Total = await total } };
+            return new ListResultModel<TaskInfo> { List = await list, Total = await total };
         }
 
 
         [HttpGet]
-        public async Task<GlobalResultModel> GetTaskLog([FromQuery] GetTaskLogModel input)
+        public async Task<ListResultModel<TaskLog>> GetTaskLog([FromQuery] GetTaskLogModel input)
         {
             var query = _freesql.Select<TaskLog>().Where(x => x.TaskId == input.TaskId);
 
@@ -71,15 +71,14 @@ namespace Worker2.Controllers
             var total = query.CountAsync();
             var list = query.OrderByDescending(x => x.Id).Page(input.PageIndex, input.PageSize).ToListAsync();
 
-            return new GlobalResultModel { Data = new { Data = await list, Total = await total } };
+            return new ListResultModel<TaskLog> { List = await list, Total = await total };
         }
 
         [HttpGet]
-        public async Task<GlobalResultModel> GetTaskInfo([FromQuery] int id)
+        public async Task<TaskInfo> GetTaskInfo([FromQuery] int id)
         {
             var query = _freesql.Select<TaskInfo>().Where(x => x.Id == id).FirstAsync();
-
-            return new GlobalResultModel { Data = await query };
+            return await query;
         }
 
         [HttpGet]

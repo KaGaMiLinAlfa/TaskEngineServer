@@ -21,5 +21,6 @@ namespace Task.CodeHandle.EntityModel
         public int Stats { get; set; }
 
         public string HandlePackPath { get; set; }
+        public string ErrorFilePath { get; set; }
     }
 }

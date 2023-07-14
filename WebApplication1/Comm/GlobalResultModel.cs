@@ -27,8 +27,6 @@ namespace Worker2.Comm
         }
     }
 
-
-
     public class ListResultModel<T>
     {
         public List<T> List { get; set; }

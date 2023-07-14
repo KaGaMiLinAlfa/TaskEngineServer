@@ -4,6 +4,8 @@ namespace Worker2.ApiModel.CodeHandle
 {
     public class CreateCodeHandleModel
     {
+        public int Id { get; set; }
+
         public string Name { get; set; }
 
         public int CodeType { get; set; }
