@@ -152,12 +152,19 @@ namespace Task.CodeHandle
 
         public bool Handle(string clientPackerFile, int handleId)
         {
+            CodeHandleService.HandleInfoLog($"开始规则处理码包-HandleId:{handleId}");
+
             var tuple = GetImprotAndErrorDic(clientPackerFile);
 
             var improtDic = tuple.Item1;
             var errorDic = tuple.Item2;
 
+            CodeHandleService.HandleInfoLog($"解析出导入码量:{improtDic.Count} ;错误匹配码量:{errorDic.Count}");
+
             var errorFile = WriteErrorFile(errorDic);
+
+            if (!string.IsNullOrEmpty(errorFile))
+                CodeHandleService.HandleInfoLog($"写入匹配错误码文件:{errorFile}");
 
             var codeRelationCount = CodeServiceSDK.GetCodeRelationCount(new CodeRelation
             {
@@ -168,11 +175,13 @@ namespace Task.CodeHandle
                 StorageState = 0
             });
 
+            CodeHandleService.HandleInfoLog($"查询码关系数:{codeRelationCount?.Return_data ?? -1}");
+
             var type = GetCodeRelationDataStats(codeRelationCount, _bacthInfo, improtDic.Count);
             if (type == 0)
                 throw new Exception("状态验证异常");
 
-
+            CodeHandleService.HandleInfoLog($"判断得执行处理方式:{Convert.ToString(type, 2)}");
 
             if ((type & 0b10) != 0)
             {
@@ -184,13 +193,19 @@ namespace Task.CodeHandle
                     BigSerialIsNull = false,
                     StorageState = -1
                 });
+
+                CodeHandleService.HandleInfoLog($"删除码关系数量:{delectCount}");
             }
 
             var importFile = WriteImprotFile(improtDic);
+            CodeHandleService.HandleInfoLog($"写入导入的码处理文件:{importFile}");
+
             BaseResponseModelV1<ImportFileResult> importResult = null;
             if ((type & 0b01) != 0)
             {
                 var uploadUrl = CodeServiceSDK.UploadFileWithParameters(importFile, _bacthInfo.Memberlogin).Result;
+
+                CodeHandleService.HandleInfoLog($"成功上传码包文件:{uploadUrl}");
 
                 importResult = CodeServiceSDK.ImportFangcuanRelation(new ImportRelationRequest
                 {
@@ -201,12 +216,28 @@ namespace Task.CodeHandle
                     id = _bacthInfo.BatchId,
                     Memberlogin = _bacthInfo.Memberlogin
                 });
+
+                CodeHandleService.HandleInfoLog($"成功导入码包; 成功数:{importResult?.parameter?.sucCount ?? -1};失败数:{importResult?.parameter?.errCount ?? -1}");
             }
 
 
-            CodeHandleService.fsql.Update<EntityModel.CodeHandle>()
-                .Set(x => x.ErrorFilePath, errorFile)
+            if (!string.IsNullOrEmpty(errorFile))
+                CodeHandleService.fsql.Update<EntityModel.CodeHandle>()
+                    .Set(x => x.ErrorFilePath, errorFile)
+                    .Where(x => x.Id == handleId).ExecuteAffrows();
+
+            if (importResult?.parameter?.sucCount > 0 && importResult?.parameter?.errCount <= 0)
+            {
+                CodeHandleService.fsql.Update<EntityModel.CodeHandle>()
+                .Set(x => x.Stats, 4)
                 .Where(x => x.Id == handleId).ExecuteAffrows();
+            }
+            else
+            {
+                CodeHandleService.fsql.Update<EntityModel.CodeHandle>()
+               .Set(x => x.Stats, 3)
+               .Where(x => x.Id == handleId).ExecuteAffrows();
+            }
 
             return true;
         }
@@ -228,7 +259,11 @@ namespace Task.CodeHandle
 
         private Tuple<Dictionary<string, ImportLine>, Dictionary<string, ImportLine>> GetImprotAndErrorDic(string clientPackerFile)
         {
+            CodeHandleService.HandleInfoLog($"开始匹配码包 PackerFile:{clientPackerFile}");
+
             var bdeCodes = GetBDEPackgeCodeDic();
+
+            CodeHandleService.HandleInfoLog($"BDE码数:{bdeCodes.Count}");
 
             var line = string.Empty;
             var newDictionary = new Dictionary<string, ImportLine>();
@@ -335,7 +370,11 @@ namespace Task.CodeHandle
 
         Dictionary<string, string> GetBDEPackgeCodeDic()
         {
+            CodeHandleService.HandleInfoLog($"开始下载BDE码包 FilePath:{_bacthInfo.FilePath}");
+
             var codePackgePath = SingleDownload.GetSingleCodePackge(_bacthInfo.CodeSegment, _bacthInfo.CodeBatch, _bacthInfo.FilePath, _bacthInfo.ZipPwd);
+
+            CodeHandleService.HandleInfoLog($"BDE码包路径:{codePackgePath}");
 
             var line = string.Empty;
             var bdeCodes = new Dictionary<string, string>();
@@ -441,6 +480,9 @@ namespace Task.CodeHandle
             });
 
             QueryOrderApplyDto bacthInfo = applyOrder?.Return_data?.Results?.FirstOrDefault();
+
+            CodeHandleService.HandleInfoLog($"查询到码段信息-Id:{bacthInfo?.BatchId}");
+
             if (bacthInfo == null)
                 throw new Exception("码信息为空");
 
@@ -453,6 +495,8 @@ namespace Task.CodeHandle
 
                 default: throw new Exception("解析出未知的处理类型");
             }
+
+            CodeHandleService.HandleInfoLog($"解析出处理类型为:{handleType}");
 
             return handleType;
         }

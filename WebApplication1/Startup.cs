@@ -42,7 +42,7 @@ namespace Worker
 
             services.AddCors(options =>
             {
-                options.AddPolicy(name: "MyPolicy",
+                options.AddPolicy(name: "Policy",
                                   builder =>
                                   {
                                       builder.AllowAnyOrigin()
@@ -85,7 +85,7 @@ namespace Worker
 
             app.UseRouting();
 
-            app.UseCors("MyPolicy");
+            app.UseCors("Policy");
 
             //app.UseAuthorization();
 
