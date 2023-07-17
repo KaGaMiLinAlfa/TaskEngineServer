@@ -79,6 +79,10 @@ namespace Worker
             if (env.IsDevelopment())
                 app.UseDeveloperExceptionPage();
 
+            var defaultFilesOptions = new DefaultFilesOptions();
+            app.UseDefaultFiles(defaultFilesOptions);
+            app.UseStaticFiles();
+
             app.UseRouting();
 
             app.UseCors("MyPolicy");
