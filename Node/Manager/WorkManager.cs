@@ -9,6 +9,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Runtime.Loader;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -153,12 +154,30 @@ namespace Node.Manager
 
         public static void RunTask(string taskid, string dllPath, string className, string config)
         {
-
+            Assembly.Load(File.ReadAllBytes(dllPath));
             var assembly = Assembly.LoadFrom(dllPath);// dll路径
             var type = assembly.GetType(className); // 获取该dll中命名空间类
             object obj = Activator.CreateInstance(type);// 实例化该类
             if (!(obj is BaseTask))
                 throw new Exception("错误类型!");
+
+
+            #region MyRegion
+            //var fullPath = Path.GetFullPath(dllPath);
+            //var clx = new CustomLoadContext(fullPath); // initialize custom context
+            //var assembly = clx.LoadFromStream(new MemoryStream(File.ReadAllBytes(fullPath))); // load your desired assembly
+            //var type = assembly.GetType(className); // 获取该dll中命名空间类
+            //object obj = Activator.CreateInstance(type);// 实例化该类
+
+
+            //MethodInfo method = type.GetMethod("Run");//Loading
+            //MethodInfo method2 = type.GetMethod("Init");//Loading
+
+            //method2.Invoke(obj, null);
+            ////传入所调方法需要的参数
+            //method.Invoke(obj, null);//Execute
+            #endregion
+
 
             var baseTask = (obj as BaseTask);
 
@@ -168,6 +187,29 @@ namespace Node.Manager
             baseTask.Run();
 
             Console.WriteLine("Worker结束锚点");
+        }
+    }
+
+    public class CustomLoadContext : AssemblyLoadContext
+    {
+        private readonly AssemblyDependencyResolver resolver;
+
+        public CustomLoadContext(string mainAssemblyToLoadPath) : base(isCollectible: true)
+        {
+            resolver = new AssemblyDependencyResolver(mainAssemblyToLoadPath);
+        }
+
+
+        protected override Assembly Load(AssemblyName name)
+        {
+            Console.WriteLine("Resolving : {0}", name.FullName);
+            var assemblyPath = resolver.ResolveAssemblyToPath(name);
+            if (assemblyPath != null)
+            {
+                return Assembly.Load(File.ReadAllBytes(assemblyPath));
+            }
+
+            return Assembly.Load(name);
         }
     }
 

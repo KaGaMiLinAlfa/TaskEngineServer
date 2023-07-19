@@ -38,8 +38,8 @@ namespace Worker
 
                 return fsql;
             };
-            services.AddSingleton<IFreeSql>(fsql);
-
+            services.AddSingleton(fsql);
+     
             services.AddCors(options =>
             {
                 options.AddPolicy(name: "Policy",

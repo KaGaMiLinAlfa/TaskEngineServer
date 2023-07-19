@@ -16,6 +16,10 @@ namespace Node
 
             //ChiProcess.RunTask(@"D:\MiDuo\Code\TaskEngineServer\Node\bin\Debug\netcoreapp3.1\DownloadFile\V1-1", "", "");
 
+            //args = new string[] { "Worker","11", "D:\\MiDuo\\Code\\TaskEngineServer\\Task\\bin\\Release\\netcoreapp3.1\\publish\\Task.dll", "Task.CodeHandle.CodeHandleService" };
+
+
+
             await Console.Out.WriteLineAsync($"args:{string.Join(",", args)}");
             if (args.FirstOrDefault() == "Worker")
                 ChiProcess.RunTask(args[1], args[2],  args[3],"");

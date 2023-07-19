@@ -82,13 +82,13 @@ namespace Worker2.Controllers
         }
 
         [HttpGet]
-        public async Task<ActionResult> GetTaskStats([FromQuery] int[] id)
+        public async Task<object> GetTaskStats([FromQuery] int[] id)
         {
             if (id.Length <= 0)
-                return SuccessObj(new int[0]);
+                return new int[0];
 
             var query = _freesql.Select<TaskInfo>().Where(x => id.Contains(x.Id)).ToListAsync(s => new { s.Id, s.Stats });
-            return SuccessObj(await query);
+            return await query;
         }
 
         #endregion
@@ -143,18 +143,18 @@ namespace Worker2.Controllers
         };
 
         [HttpPost]
-        public async Task<ActionResult<bool>> ModifyTaskStats(ModifyTaskStats input)
+        public async Task<bool> ModifyTaskStats(ModifyTaskStats input)
         {
             var targetStatus = (TaskStats)input.TargetStatus;
             if (!TaskStatsMap.ContainsKey((TaskStats)input.TargetStatus))
-                return ParameterError($"目标状态错误! 目标状态:{targetStatus.GetDescription()}不是约定的状态");
+                throw new Exception($"目标状态错误! 目标状态:{targetStatus.GetDescription()}不是约定的状态");
 
             var taskStats = (TaskStats)_freesql.Select<TaskInfo>().Where(x => x.Id == input.TaskId).First(s => s.Stats);
             if (taskStats <= 0)
-                return ParameterError($"TaskId[{input.TaskId}]不存在或Task当前状态错误!");
+                throw new Exception($"TaskId[{input.TaskId}]不存在或Task当前状态错误!");
 
             if (!TaskStatsMap[taskStats].Contains(targetStatus))
-                return ParameterError($"当前任务状态为 [{taskStats.GetDescription()}] ,不能转到 [{targetStatus.GetDescription()}] 状态");
+                throw new Exception($"当前任务状态为 [{taskStats.GetDescription()}] ,不能转到 [{targetStatus.GetDescription()}] 状态");
 
             var update = _freesql.Update<TaskInfo>().Set(x => new TaskInfo
             {
@@ -164,9 +164,9 @@ namespace Worker2.Controllers
             var operationResult = await update.ExecuteAffrowsAsync() > 0;
 
             if (operationResult)
-                return Success(true);
+                return true;
 
-            return OperationError("修改状态失败!");
+            throw new Exception("修改状态失败!");
         }
 
 

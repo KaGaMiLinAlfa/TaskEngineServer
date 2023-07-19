@@ -8,6 +8,7 @@ using System.ComponentModel.DataAnnotations;
 using System.Diagnostics;
 using System.Reflection;
 using Task.CodeHandle;
+using Task.CodeHandle.EntityModel;
 
 namespace test
 {
@@ -18,8 +19,8 @@ namespace test
         //server=localhost;port=3306;database=TaskDB;uid=root;pwd=123123;
         static void Main(string[] args)
         {
-
-            new CodeHandleService().Handle();
+            //SharpCompress.Common.ArchiveEncoding ArchiveEncoding = new SharpCompress.Common.ArchiveEncoding();
+            new CodeHandleService().Run();
 
             Console.WriteLine("over");
         }

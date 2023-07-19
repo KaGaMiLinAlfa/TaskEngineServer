@@ -192,7 +192,7 @@ namespace Node.Manager
 
         private List<TaskInfo> GetNodeTasksInfo()
         {
-            return DB.FSql.Select<TaskInfo>().Where(x => x.Id == 1).ToList();
+            return DB.FSql.Select<TaskInfo>().Where(x => x.Id > 0).ToList();
             //return new List<TaskInfo>();
         }
 

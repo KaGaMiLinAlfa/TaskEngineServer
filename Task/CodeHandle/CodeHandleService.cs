@@ -9,6 +9,7 @@ using SharpCompress.Compressors.LZMA;
 using SharpCompress.Readers;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Globalization;
 using System.IO;
 using System.Linq;
@@ -24,6 +25,13 @@ using static FreeSql.Internal.GlobalFilter;
 
 namespace Task.CodeHandle
 {
+    public static class ExceptionHelp
+    {
+        public static Exception GetInnerMsg(this Exception ex)
+        {
+            return ex.InnerException == null ? ex : ex.GetInnerMsg();
+        }
+    }
     public class CodeHandleService : BaseTask
     {
         static string connectionString = "server=localhost;port=3306;database=TaskDB;uid=root;pwd=123123;";
@@ -55,22 +63,35 @@ namespace Task.CodeHandle
 
         public override void Run()
         {
-            LogHelper.Info("任务开始执行");
-
+            LogHelper.Info("任务开始执行1111111111111111");
+            Console.WriteLine("test");
             try
             {
-                var handleList = fsql.Select<EntityModel.CodeHandle>().Where(x => x.Stats == 1).ToList();
 
+                fsql = new FreeSql.FreeSqlBuilder().UseConnectionString(FreeSql.DataType.MySql, connectionString).Build();
+                Console.WriteLine($"锚点0:{fsql.ToString()}");
+                var handleList = fsql.Select<EntityModel.CodeHandle>().Where(x => x.Stats == 1).ToList();
+                Console.WriteLine("锚点1");
+                if (handleList.Count <= 0)
+                {
+                    LogHelper.Info("本次没有需要执行的码处理");
+                    return;
+                }
+                Console.WriteLine("锚点2");
                 foreach (var item in handleList)
                     Handle(item);
 
             }
             catch (Exception ex)
             {
-                LogHelper.Error("任务异常");
+
+                LogHelper.Error($"任务异常:{ex.Message};{ex.StackTrace}");
+                if (ex.InnerException != null)
+                    LogHelper.Error($"任务异常:{ex.GetInnerMsg().Message};{ex.GetInnerMsg().StackTrace}");
+
             }
 
-            LogHelper.Info("任务结束");
+            LogHelper.Info("任务结束222");
         }
 
         public void Handle(EntityModel.CodeHandle item)
@@ -162,6 +183,10 @@ namespace Task.CodeHandle
             CodeHandleService.HandleInfoLog($"解析出导入码量:{improtDic.Count} ;错误匹配码量:{errorDic.Count}");
 
             var errorFile = WriteErrorFile(errorDic);
+            if (!string.IsNullOrEmpty(errorFile))
+                CodeHandleService.fsql.Update<EntityModel.CodeHandle>()
+                    .Set(x => x.ErrorFilePath, errorFile)
+                    .Where(x => x.Id == handleId).ExecuteAffrows();
 
             if (!string.IsNullOrEmpty(errorFile))
                 CodeHandleService.HandleInfoLog($"写入匹配错误码文件:{errorFile}");
@@ -205,7 +230,7 @@ namespace Task.CodeHandle
             {
                 var uploadUrl = CodeServiceSDK.UploadFileWithParameters(importFile, _bacthInfo.Memberlogin).Result;
 
-                CodeHandleService.HandleInfoLog($"成功上传码包文件:{uploadUrl}");
+                CodeHandleService.HandleInfoLog($"成功上传码包文件:{uploadUrl?.Return_data}");
 
                 importResult = CodeServiceSDK.ImportFangcuanRelation(new ImportRelationRequest
                 {
@@ -217,14 +242,22 @@ namespace Task.CodeHandle
                     Memberlogin = _bacthInfo.Memberlogin
                 });
 
+                if (importResult?.errcode != 0)
+                {
+                    CodeHandleService.HandleInfoLog($"导入码包失败:{importResult?.errmsg}");
+                    CodeHandleService.fsql.Update<EntityModel.CodeHandle>()
+                        .Set(x => x.Stats, 3)
+                        .Where(x => x.Id == handleId).ExecuteAffrows();
+                    return false;
+                }
+
+
+
                 CodeHandleService.HandleInfoLog($"成功导入码包; 成功数:{importResult?.parameter?.sucCount ?? -1};失败数:{importResult?.parameter?.errCount ?? -1}");
             }
 
 
-            if (!string.IsNullOrEmpty(errorFile))
-                CodeHandleService.fsql.Update<EntityModel.CodeHandle>()
-                    .Set(x => x.ErrorFilePath, errorFile)
-                    .Where(x => x.Id == handleId).ExecuteAffrows();
+
 
             if (importResult?.parameter?.sucCount > 0 && importResult?.parameter?.errCount <= 0)
             {
@@ -468,9 +501,12 @@ namespace Task.CodeHandle
             bacthCode = firstCodeInfo?.Return_data?.CodeBatch;
             segmentCode = firstCodeInfo?.Return_data?.CodeSegment;
 
+            if (firstCodeInfo.Return_msg != "OK")
+                throw new Exception($"查码失败,失败消息:{firstCodeInfo?.Return_msg ?? "空信息"}");
+
             CodeHandleService.HandleInfoLog($"查询到的信息-CodeSegment:{segmentCode};CodeBatch:{bacthCode}");
 
-            if (!string.IsNullOrEmpty(bacthCode) || !string.IsNullOrEmpty(segmentCode))
+            if (string.IsNullOrEmpty(bacthCode) || string.IsNullOrEmpty(segmentCode))
                 throw new Exception("查码无批次信息返回,可能假码或接口异常");
 
             var applyOrder = CodeServiceSDK.QueryOrderApply(new QueryOrderApplyRequest
@@ -479,7 +515,7 @@ namespace Task.CodeHandle
                 CodeBatch = bacthCode,
             });
 
-            QueryOrderApplyDto bacthInfo = applyOrder?.Return_data?.Results?.FirstOrDefault();
+            var bacthInfo = applyOrder?.Return_data?.Results?.FirstOrDefault();
 
             CodeHandleService.HandleInfoLog($"查询到码段信息-Id:{bacthInfo?.BatchId}");
 
@@ -514,12 +550,12 @@ namespace Task.CodeHandle
                 firstType = 0b0010;
             else if (Regex.IsMatch(first, @"^[a-zA-Z0-9]+$"))
                 firstType = 0b0100;
-            else if (Regex.IsMatch(second, @"^http") && second.IndexOf('/') > 0)
+            else if (Regex.IsMatch(first, @"^http") && first.IndexOf('/') > 0)
                 firstType = 0b1000;
 
-            if (Regex.IsMatch(first, @"^\d+$"))
+            if (Regex.IsMatch(second, @"^\d+$"))
                 secondType = 0b0010;
-            else if (Regex.IsMatch(first, @"^[a-zA-Z0-9]+$"))
+            else if (Regex.IsMatch(second, @"^[a-zA-Z0-9]+$"))
                 secondType = 0b0100;
             else if (Regex.IsMatch(second, @"^http") && second.IndexOf('/') > 0)
                 secondType = 0b1000;
@@ -575,15 +611,52 @@ namespace Task.CodeHandle
             if (!Directory.Exists(extractPath))
                 Directory.CreateDirectory(extractPath);
 
-            using (var archive = ArchiveFactory.Open(tempBacthPackFileRar, new ReaderOptions() { Password = bacthPackRarPassword }))
-                foreach (var entry in archive.Entries)
-                    if (!entry.IsDirectory)
-                        entry.WriteToDirectory(extractPath, new ExtractionOptions()
+            CodeHandleService.HandleInfoLog($"Bde文件:{tempBacthPackFileRar},密码:{bacthPackRarPassword}");
+
+            try
+            {
+                var ArchiveEncoding = new ArchiveEncoding();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+                throw ex;
+            }
+
+            var options = new ReaderOptions()
+            {
+                Password = bacthPackRarPassword,
+            };
+
+            Console.WriteLine("锚点1");
+            //options.ArchiveEncoding.Default = Encoding.GetEncoding("gb2312");
+            using (Stream stream = File.OpenRead(tempBacthPackFileRar))
+            using (var archive = ReaderFactory.Open(stream, options))
+            {
+                Console.WriteLine("锚点2");
+                //foreach (var entry in archive.Entries)
+                //    if (!entry.IsDirectory)
+                //        entry.WriteToDirectory(extractPath, new ExtractionOptions()
+                //        {
+                //            ExtractFullPath = true,
+                //            Overwrite = true
+                //        });
+
+                while (archive.MoveToNextEntry())
+                {
+                    if (!archive.Entry.IsDirectory)
+                    {
+                        Console.WriteLine(archive.Entry.Key);
+                        archive.WriteEntryToDirectory(extractPath, new ExtractionOptions()
                         {
                             ExtractFullPath = true,
                             Overwrite = true
                         });
+                    }
+                }
+            }
 
+            Console.WriteLine("锚点3");
             var firstFilePath = GetFirstFile(extractPath);
 
             return firstFilePath;
