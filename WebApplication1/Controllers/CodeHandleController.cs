@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Primitives;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -47,15 +48,15 @@ namespace Worker2.Controllers
         }
 
         [HttpGet]
-        public async Task<GlobalResultModel> GetTaskLog([FromQuery] int handleId)
+        public async Task<List<CodeHandleLog>> GetCodeHandleLog([FromQuery] int id)
         {
-            var query = _freesql.Select<CodeHandleLog>().Where(x => x.HandleId == handleId);
+            var query = _freesql.Select<CodeHandleLog>().Where(x => x.HandleId == id);
 
 
             var total = query.CountAsync();
             var list = query.OrderBy(x => x.Id).ToListAsync();
 
-            return new GlobalResultModel { Data = new { Data = await list, Total = await total } };
+            return await list;
         }
 
 
@@ -73,7 +74,9 @@ namespace Worker2.Controllers
                 CreateTime = DateTime.Now,
                 CodeType = input.CodeType,
                 Stats = 1,
-                HandlePackPath = input.HandlePackPath
+                HandlePackPath = input.HandlePackPath,
+                Remark = string.Empty,
+                ErrorFilePath = string.Empty,
             }).ExecuteIdentityAsync();
 
 
@@ -89,7 +92,8 @@ namespace Worker2.Controllers
                 Name = input.Name,
                 CodeType = input.CodeType,
                 Stats = 1,
-                HandlePackPath = input.HandlePackPath
+                HandlePackPath = input.HandlePackPath,
+                Remark = input.Remark
             }).Where(x => x.Id == input.Id).ExecuteAffrowsAsync();
 
 

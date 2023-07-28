@@ -3,6 +3,7 @@ using Node.Model;
 using Quartz;
 using Quartz.Impl;
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.IO;
@@ -10,7 +11,9 @@ using System.Linq;
 using System.Security.Policy;
 using System.Text;
 using System.Text.RegularExpressions;
+using System.Threading;
 using System.Threading.Tasks;
+using static FreeSql.Internal.GlobalFilter;
 
 namespace Node.Manager
 {
@@ -42,7 +45,7 @@ namespace Node.Manager
             {
                 try
                 {
-                    Console.WriteLine($"刷新心跳");
+                    Console.WriteLine($"刷新心跳,当前线程{Thread.CurrentThread.ManagedThreadId}");
                     CheckTaskInfo();
                 }
                 catch (Exception ex)
@@ -68,6 +71,9 @@ namespace Node.Manager
 
             //4.节点状态更新
 
+
+            //5.卡住的任务改为待启动
+            ResetPendingStartTask();
         }
 
         private void UpdateNodeTask()
@@ -80,7 +86,7 @@ namespace Node.Manager
                 if (!Worker.Keys.Contains(item.Id))
                     AddJob(item);
 
-            //通知Worker停止或中止任务
+            //通知已经挂载了Worker的停止或中止任务更新停止状态/卸载Worker
             var stopTask = tasks.Where(x => new int[] { 4, 5 }.Contains(x.Stats) && Worker.Keys.Contains(x.Id));
             foreach (var item in stopTask)
                 switch (item.Stats)
@@ -89,12 +95,14 @@ namespace Node.Manager
                     case 5: Worker[item.Id].NeedAbort = true; UnInstallWorker(item); break;
                 }
 
+
+
             //卸载Worker已经停止的任务
             foreach (var item in Worker)
                 if (item.Value.IsStop)
                     RemoveJob(Worker[item.Value.TaskInfo.Id]);
 
-            //卸载状态为已停止容器(道理来说,不会存在这样的task,页面操作需要等待子程序结束后,再轮询卸载worker,除非改数据库大面积停止)
+            //卸载状态为已停止容器(道理来说,不会存在这样的task,页面操作需要等待子程序结束后,再轮询卸载worker,除非改数据库使其大面积停止)
             var unInstallTask = tasks.Where(x => x.Stats == 1 && Worker.Keys.Contains(x.Id));
             foreach (var item in unInstallTask)
                 Worker[item.Id].WaitingToStop = true;
@@ -118,10 +126,10 @@ namespace Node.Manager
                 case 5: Worker[taskInfo.Id].NeedAbort = true; break;
             }
 
+            //没启动的话,直接卸载
             if (Worker[taskInfo.Id].TaskInfo.Stats == 2)
-            {
                 RemoveJob(Worker[taskInfo.Id]);
-            }
+
 
 
 
@@ -131,7 +139,8 @@ namespace Node.Manager
         {
             var job = JobBuilder.Create(typeof(WorkManager)).WithIdentity(newTask.TaskId, NodeId).Build();
             var trigger = TriggerBuilder.Create().WithIdentity(newTask.TaskId, NodeId)
-                .WithCronSchedule(newTask.Cron, x => x.WithMisfireHandlingInstructionDoNothing()).Build();
+                .WithCronSchedule(newTask.Cron, x => x.WithMisfireHandlingInstructionDoNothing())
+                .Build();
 
             var taskDllPath = $"{ZipHelper.GetTaskDllPath(newTask.PackageUrl, Path.Combine(DLLSavePath, $"V{newTask.PackageId}-{newTask.Id}"))}";
 
@@ -142,6 +151,8 @@ namespace Node.Manager
                 TaskInfo = newTask,
                 TaskDllPath = taskDllPath
             };
+
+
 
             //if (string.IsNullOrEmpty(jobModel.TaskDllPath))
             //需要写上上传包没有dll文件的报错日志;
@@ -190,6 +201,23 @@ namespace Node.Manager
                 Directory.Delete(path, true);
         }
 
+        private void ResetPendingStartTask()
+        {
+            var pendingStartTask = DB.FSql.Select<TaskInfo>()
+                .Where(x => new int[] { 2, 3 }.Contains(x.Stats) && x.LastHeartbeatTime < DateTime.Now.AddMinutes(-1))
+                .ToList(s => new { s.Id, s.Stats });
+
+            foreach (var item in pendingStartTask)
+                DB.FSql.Update<TaskInfo>().Set(x => new TaskInfo
+                {
+                    Stats = 6,
+                    LastHeartbeatTime = DateTime.Now,
+                }).Where(x => x.Id == item.Id && x.Stats == item.Stats).ExecuteAffrows();
+
+            if (pendingStartTask.Count > 0)
+                Console.WriteLine($"重置Id {string.Join(',', pendingStartTask.Select(s => s.Id))} 任务状态为待启动,当前线程{Thread.CurrentThread.ManagedThreadId}");
+        }
+
         private List<TaskInfo> GetNodeTasksInfo()
         {
             return DB.FSql.Select<TaskInfo>().Where(x => x.Id > 0).ToList();
@@ -212,26 +240,78 @@ namespace Node.Manager
 
     public class QuartzModel
     {
+        public QuartzModel()
+        {
+            timer = new Timer(TaskHeartbeatTime, new AutoResetEvent(false), 1000, 5000);
+        }
+
         public IJobDetail Job { get; set; }
         public ITrigger Trigger { get; set; }
 
-        public bool IsCancel { get; set; }
-        public bool IsCompleted { get; set; }
 
         public string TaskDllPath { get; set; }
-        public string TaskClass { get; set; }
+
         public string Config { get; set; }
 
         public TaskInfo TaskInfo { get; set; }
-        public bool IsRun { get; set; }
+
 
 
         public bool WaitingToStop { get; set; }
         public bool NeedAbort { get; set; }
-
         public bool IsStop { get; set; }
 
-        public System.Threading.Timer timer { get; set; }
+        public Timer timer { get; set; }
+
+        public IExecutePackageAction Executer { get; set; }
+
+
+
+        private void TaskHeartbeatTime(object sender)
+        {
+            Console.WriteLine($"Worker Heartbeat,当前线程{Thread.CurrentThread.ManagedThreadId}");
+
+            try
+            {
+                var update = DB.FSql.Update<TaskInfo>()
+                    .Set(x => x.LastHeartbeatTime == DateTime.Now)
+                    .Where(x => x.Id == TaskInfo.Id)
+                    .ExecuteAffrows();
+            }
+            catch (Exception ex)
+            {
+
+                Console.WriteLine("Worker Heartbeat 数据库异常");
+            }
+
+            if (NeedAbort)
+            {
+                Console.WriteLine($"{TaskInfo.Id} 收到中止信号,执行中止");
+
+                if (Executer != null)
+                    Executer.Cancel();
+
+                IsStop = true;
+                if (timer != null)
+                    timer.Dispose();
+
+                return;
+            }
+
+            if (WaitingToStop)
+                Console.WriteLine($"{TaskInfo.Id} 收到停止信号,等待停止");
+
+            if (WaitingToStop && Executer != null && !Executer.IsRunning)
+            {
+                Console.WriteLine($"{TaskInfo.Id} 已执行完毕,停止操作");
+                IsStop = true;
+                if (timer != null)
+                    timer.Dispose();
+            }
+
+
+        }
+
     }
 
 }

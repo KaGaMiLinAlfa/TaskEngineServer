@@ -18,5 +18,7 @@ namespace Worker2.EntityModel
         public int Stats { get; set; }
 
         public string HandlePackPath { get; set; }
+        public string Remark { get; set; }
+        public string ErrorFilePath { get; set; }
     }
 }

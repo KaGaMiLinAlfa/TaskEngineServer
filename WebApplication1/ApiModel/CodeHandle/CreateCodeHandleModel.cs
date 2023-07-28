@@ -16,5 +16,6 @@ namespace Worker2.ApiModel.CodeHandle
         public int Stats { get; set; }
 
         public string HandlePackPath { get; set; }
+        public string Remark { get; internal set; }
     }
 }

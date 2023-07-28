@@ -55,6 +55,8 @@ namespace Worker2.EntityModel
         /// </summary>
         [Column(IsNullable = false)]
         public int Stats { get; set; }
+
+        public string Remark { get; set; }
     }
 
     public enum TaskStats

@@ -21,7 +21,7 @@ namespace Node.Manager
     {
 
         private QuartzModel quartzModel;
-        private IExecutePackageAction _executer;
+        private bool _isInit;
 
         public async Task Execute(IJobExecutionContext context)
         {
@@ -31,58 +31,23 @@ namespace Node.Manager
             if (quartzModel.IsStop || quartzModel.WaitingToStop || quartzModel.NeedAbort)
                 return;
 
-            //开启心跳
-            if (quartzModel.timer == null)
-                quartzModel.timer = new System.Threading.Timer(TaskHeartbeatTime, new AutoResetEvent(false), 1000, 5000);
+            //if (quartzModel.timer == null)
+            //{
+            //    quartzModel.timer = new System.Threading.Timer(TaskHeartbeatTime, new AutoResetEvent(false), 1000, 5000);
+            //    await Console.Out.WriteLineAsync($"第一周期启动心跳并立即结束");
+            //    return;
+            //}
 
             await Console.Out.WriteLineAsync($"Pahe:{quartzModel.TaskDllPath}->{DateTime.Now}:任务开始 -- Name = {quartzModel.TaskInfo.TaskName}");
 
-
-            _executer = new ChiProcess();
+            if (quartzModel.Executer == null || !quartzModel.Executer.IsRunning)
+                quartzModel.Executer = new ChiProcess();
 
             var dllfilepath = Path.Combine(quartzModel.TaskDllPath, quartzModel.TaskInfo.DllName);
-
-            _executer.SetPath(quartzModel.TaskInfo.Id.ToString(), dllfilepath, quartzModel.TaskInfo.ClassPath, quartzModel.Config);
-
-
-
-            _executer.Execute(quartzModel.TaskInfo);
+            quartzModel.Executer.SetPath(quartzModel.TaskInfo.Id.ToString(), dllfilepath, quartzModel.TaskInfo.ClassPath, quartzModel.Config);
+            quartzModel.Executer.Execute(quartzModel.TaskInfo);
 
             Console.WriteLine("BaseTask结束锚点");
-        }
-
-        private void TaskHeartbeatTime(object sender)
-        {
-            Console.WriteLine("Worker Heartbeat");
-
-            var update = DB.FSql.Update<TaskInfo>()
-                .Set(x => x.LastHeartbeatTime == DateTime.Now)
-                .Where(x => x.Id == quartzModel.TaskInfo.Id)
-                .ExecuteAffrows();
-
-            if (quartzModel.NeedAbort)
-            {
-                Console.WriteLine($"{quartzModel.TaskInfo.Id} 收到中止信号,执行中止");
-                _executer.Cancel();
-                quartzModel.IsStop = true;
-                if (quartzModel.timer != null)
-                    quartzModel.timer.Dispose();
-
-                return;
-            }
-
-            if (quartzModel.WaitingToStop)
-                Console.WriteLine($"{quartzModel.TaskInfo.Id} 收到停止信号,等待停止");
-
-            if (quartzModel.WaitingToStop && !_executer.IsRunning)
-            {
-                Console.WriteLine($"{quartzModel.TaskInfo.Id} 已执行完毕,停止操作");
-                quartzModel.IsStop = true;
-                if (quartzModel.timer != null)
-                    quartzModel.timer.Dispose();
-            }
-
-
         }
     }
 
@@ -101,8 +66,6 @@ namespace Node.Manager
                 Console.WriteLine("状态检查异常停止当前周期执行");
                 return;
             }
-
-
 
             IsRunning = true;
 

@@ -1,7 +1,9 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
 using System;
 using System.Collections.Generic;
 using System.Configuration;
+using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using Worker2.ApiModel.Task;
@@ -169,6 +171,23 @@ namespace Worker2.Controllers
             throw new Exception("修改状态失败!");
         }
 
+
+        [HttpPost]
+        public async Task<GlobalResultModel<string>> UploadPackage(IFormFile file,string remark)
+        {
+            if (file == null || file.Length == 0)
+                throw new Exception("获取文件失败");
+
+            var uploadsFolderPath = Path.Combine(AppContext.BaseDirectory, "uploads");
+            if (!Directory.Exists(uploadsFolderPath))
+                Directory.CreateDirectory(uploadsFolderPath);
+
+            var filePath = Path.Combine(uploadsFolderPath, $"{DateTime.Now:yyyyMMdd-HHmmss}-{file.FileName}");
+            using (var fileStream = new FileStream(filePath, FileMode.Create))
+                await file.CopyToAsync(fileStream);
+
+            return filePath;
+        }
 
         #endregion
     }

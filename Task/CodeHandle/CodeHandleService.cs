@@ -69,15 +69,12 @@ namespace Task.CodeHandle
             {
 
                 fsql = new FreeSql.FreeSqlBuilder().UseConnectionString(FreeSql.DataType.MySql, connectionString).Build();
-                Console.WriteLine($"锚点0:{fsql.ToString()}");
                 var handleList = fsql.Select<EntityModel.CodeHandle>().Where(x => x.Stats == 1).ToList();
-                Console.WriteLine("锚点1");
                 if (handleList.Count <= 0)
                 {
                     LogHelper.Info("本次没有需要执行的码处理");
                     return;
                 }
-                Console.WriteLine("锚点2");
                 foreach (var item in handleList)
                     Handle(item);
 
@@ -611,7 +608,7 @@ namespace Task.CodeHandle
             if (!Directory.Exists(extractPath))
                 Directory.CreateDirectory(extractPath);
 
-            CodeHandleService.HandleInfoLog($"Bde文件:{tempBacthPackFileRar},密码:{bacthPackRarPassword}");
+            //CodeHandleService.HandleInfoLog($"Bde文件:{tempBacthPackFileRar},密码:{bacthPackRarPassword}");
 
             try
             {
@@ -628,22 +625,10 @@ namespace Task.CodeHandle
                 Password = bacthPackRarPassword,
             };
 
-            Console.WriteLine("锚点1");
-            //options.ArchiveEncoding.Default = Encoding.GetEncoding("gb2312");
+            options.ArchiveEncoding.Default = Encoding.GetEncoding("gb2312");
             using (Stream stream = File.OpenRead(tempBacthPackFileRar))
             using (var archive = ReaderFactory.Open(stream, options))
-            {
-                Console.WriteLine("锚点2");
-                //foreach (var entry in archive.Entries)
-                //    if (!entry.IsDirectory)
-                //        entry.WriteToDirectory(extractPath, new ExtractionOptions()
-                //        {
-                //            ExtractFullPath = true,
-                //            Overwrite = true
-                //        });
-
                 while (archive.MoveToNextEntry())
-                {
                     if (!archive.Entry.IsDirectory)
                     {
                         Console.WriteLine(archive.Entry.Key);
@@ -653,10 +638,8 @@ namespace Task.CodeHandle
                             Overwrite = true
                         });
                     }
-                }
-            }
 
-            Console.WriteLine("锚点3");
+
             var firstFilePath = GetFirstFile(extractPath);
 
             return firstFilePath;

@@ -12,6 +12,20 @@ using Task.CodeHandle.EntityModel;
 
 namespace test
 {
+    public static class test
+    {
+        public static DateTime ToDateTime(this object value, DateTime defaultValue)
+        {
+            try
+            {
+                return (value == null || value == DBNull.Value) ? defaultValue : (value.GetType().Equals(typeof(DateTime)) ? Convert.ToDateTime(value) : DateTime.Parse(value.ToString()));
+            }
+            catch
+            {
+                return defaultValue;
+            }
+        }
+    }
     internal class Program
     {
         static string connectionString = "server=localhost;port=3306;database=TaskDB;uid=root;pwd=123123;";
@@ -20,10 +34,14 @@ namespace test
         static void Main(string[] args)
         {
             //SharpCompress.Common.ArchiveEncoding ArchiveEncoding = new SharpCompress.Common.ArchiveEncoding();
-            new CodeHandleService().Run();
+            //new CodeHandleService().Run();
+
+            DateTime startTime = DateTime.Now.ToString("yyyy-MM-dd 00:00:00").ToDateTime(DateTime.MinValue);
 
             Console.WriteLine("over");
         }
+
+
 
         static IFreeSql fsql = new FreeSql.FreeSqlBuilder()
             .UseConnectionString(FreeSql.DataType.MySql, connectionString)
