@@ -110,9 +110,10 @@ namespace Worker2.Controllers
                 Cron = input.Cron,
                 ClassPath = input.ClassPath,
                 PackageId = input.PackageId,
-
+                Category = input.Category,
                 Config = string.Empty,
                 Stats = 1,
+
             });
 
             return new GlobalResultModel { Data = await insert.ExecuteIdentityAsync() };
@@ -128,7 +129,7 @@ namespace Worker2.Controllers
                 Cron = input.Cron,
                 ClassPath = input.ClassPath,
                 PackageId = input.PackageId,
-
+                Category = input.Category,
             }).Where(x => x.Id == input.Id);
 
             return new GlobalResultModel { Data = await update.ExecuteAffrowsAsync() > 0 };
@@ -172,8 +173,25 @@ namespace Worker2.Controllers
         }
 
 
+
+        #endregion
+
+        //Package
+        #region Query
+
+        [HttpGet]
+        public async Task<List<TaskPackageInfo>> GetPackageList(int top, int category)
+        {
+            var list = _freesql.Select<TaskPackageInfo>().Where(x => x.Category == category).OrderByDescending(x => x.Id).Take(top).ToListAsync();
+
+            return await list;
+        }
+
+        #endregion
+
+        #region Update
         [HttpPost]
-        public async Task<GlobalResultModel<string>> UploadPackage(IFormFile file,string remark)
+        public async Task<bool> UploadPackage(IFormFile file, [FromForm] string name, [FromForm] int category, [FromForm] string remark)
         {
             if (file == null || file.Length == 0)
                 throw new Exception("获取文件失败");
@@ -186,7 +204,16 @@ namespace Worker2.Controllers
             using (var fileStream = new FileStream(filePath, FileMode.Create))
                 await file.CopyToAsync(fileStream);
 
-            return filePath;
+            var insert = _freesql.Insert(new TaskPackageInfo
+            {
+                Name = name,
+                Category = category,
+                Remark = remark ?? "",
+                PackageUrl = filePath,
+                CreateTime = DateTime.Now,
+            }).ExecuteAffrowsAsync();
+
+            return await insert > 0;
         }
 
         #endregion

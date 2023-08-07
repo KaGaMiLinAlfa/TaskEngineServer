@@ -17,5 +17,6 @@ namespace Worker2.ApiModel.Task
         [Required(ErrorMessage = "类路径不能为空")]
         public string ClassPath { get; set; }
         public int PackageId { get; set; }
+        public int Category { get; set; }
     }
 }

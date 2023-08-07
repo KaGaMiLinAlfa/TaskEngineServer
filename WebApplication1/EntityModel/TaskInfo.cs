@@ -57,6 +57,8 @@ namespace Worker2.EntityModel
         public int Stats { get; set; }
 
         public string Remark { get; set; }
+
+        public int Category { get; set; }
     }
 
     public enum TaskStats

@@ -21,5 +21,6 @@ namespace Worker2.ApiModel.Task
 
         public int PackageId { get; set; }
 
+        public int Category { get; set; }
     }
 }

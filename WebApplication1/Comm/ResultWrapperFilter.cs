@@ -32,13 +32,15 @@ namespace Worker2.Comm
                 else
                 {
                     //如果返回结果已经是ResponseResult<T>类型的则不需要进行再次包装了
-                    if (objectResult.DeclaredType.IsGenericType && objectResult.DeclaredType?.GetGenericTypeDefinition() == typeof(GlobalResultModel<>))
+                    if (objectResult.DeclaredType?.IsGenericType == true &&
+                        objectResult.DeclaredType?.GetGenericTypeDefinition() == typeof(GlobalResultModel<>))
                     {
                         return;
                     }
                     rspResult.Data = objectResult.Value;
                     context.Result = new ObjectResult(rspResult);
                 }
+
                 return;
             }
         }
