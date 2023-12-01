@@ -1,27 +1,18 @@
 ﻿using BaseTaskManager;
 using LogManager;
+using Newtonsoft.Json;
 using SDK.MiDuo.CodeService;
 using SDK.MiDuo.CodeService.Model;
-using SharpCompress.Archives;
-using SharpCompress.Archives.Rar;
 using SharpCompress.Common;
-using SharpCompress.Compressors.LZMA;
 using SharpCompress.Readers;
 using System;
 using System.Collections.Generic;
-using System.ComponentModel;
-using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Net;
-using System.Reflection.Emit;
-using System.Runtime.InteropServices;
 using System.Text;
-using System.Text.Encodings.Web;
 using System.Text.RegularExpressions;
-using System.Web;
 using Task.CodeHandle.EntityModel;
-using static FreeSql.Internal.GlobalFilter;
 
 namespace Task.CodeHandle
 {
@@ -34,7 +25,9 @@ namespace Task.CodeHandle
     }
     public class CodeHandleService : BaseTask
     {
-        static string connectionString = "server=localhost;port=3306;database=TaskDB;uid=root;pwd=123123;";
+        //static string connectionString = "server=localhost;port=3306;database=TaskDB;uid=root;pwd=123123;";
+        public const string connectionString = "server=172.17.0.1;port=3306;database=TaskDB;uid=root;pwd=123123;";
+
         public static IFreeSql fsql = new FreeSql.FreeSqlBuilder().UseConnectionString(FreeSql.DataType.MySql, connectionString).Build();
 
         public static int TempHandleId;
@@ -63,7 +56,7 @@ namespace Task.CodeHandle
 
         public override void Run()
         {
-            LogHelper.Info("任务开始执行1111111111111111");
+            LogHelper.Info("任务开始执行");
             Console.WriteLine("test");
             try
             {
@@ -216,7 +209,10 @@ namespace Task.CodeHandle
                     StorageState = -1
                 });
 
-                CodeHandleService.HandleInfoLog($"删除码关系数量:{delectCount}");
+                if (delectCount == null || delectCount.Return_data <= 0)
+                    CodeHandleService.HandleInfoLog($"删除码关系数量失败,返回信息:{JsonConvert.SerializeObject(delectCount)}");
+
+                CodeHandleService.HandleInfoLog($"删除码关系数量:{delectCount?.Return_data ?? 0}");
             }
 
             var importFile = WriteImprotFile(improtDic);

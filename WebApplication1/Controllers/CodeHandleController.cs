@@ -93,7 +93,7 @@ namespace Worker2.Controllers
                 CodeType = input.CodeType,
                 Stats = 1,
                 HandlePackPath = input.HandlePackPath,
-                Remark = input.Remark
+                Remark = input.Remark ?? "",
             }).Where(x => x.Id == input.Id).ExecuteAffrowsAsync();
 
 

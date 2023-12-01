@@ -21,6 +21,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Task", "Task\Task.csproj", 
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SDK", "SDK\SDK.csproj", "{C785BB8A-6B04-43C2-BF93-83639F64D39A}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ClassLibrary2", "ClassLibrary2\ClassLibrary2.csproj", "{FCEA6432-0718-4A19-92B8-7E6F15D1A11D}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -59,6 +61,10 @@ Global
 		{C785BB8A-6B04-43C2-BF93-83639F64D39A}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{C785BB8A-6B04-43C2-BF93-83639F64D39A}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{C785BB8A-6B04-43C2-BF93-83639F64D39A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{FCEA6432-0718-4A19-92B8-7E6F15D1A11D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{FCEA6432-0718-4A19-92B8-7E6F15D1A11D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{FCEA6432-0718-4A19-92B8-7E6F15D1A11D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{FCEA6432-0718-4A19-92B8-7E6F15D1A11D}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

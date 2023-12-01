@@ -40,7 +40,6 @@ namespace Worker2.Comm
                     rspResult.Data = objectResult.Value;
                     context.Result = new ObjectResult(rspResult);
                 }
-
                 return;
             }
         }

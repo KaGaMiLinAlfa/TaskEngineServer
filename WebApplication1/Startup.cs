@@ -1,3 +1,4 @@
+using Google.Protobuf.WellKnownTypes;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
@@ -31,9 +32,10 @@ namespace Worker
             Func<IServiceProvider, IFreeSql> fsql = r =>
             {
                 IFreeSql fsql = new FreeSql.FreeSqlBuilder()
-                    .UseConnectionString(FreeSql.DataType.MySql, @"server=localhost;port=3306;database=TaskDB;uid=root;pwd=123123;")
-                    .UseMonitorCommand(cmd => Console.WriteLine($"Sql：{cmd.CommandText}"))//监听SQL语句
-                                                                                          //.UseAutoSyncStructure(true) //自动同步实体结构到数据库，FreeSql不会扫描程序集，只有CRUD时才会生成表。
+                    //.UseConnectionString(FreeSql.DataType.MySql, @"server=localhost;port=3306;database=TaskDB;uid=root;pwd=123123;")
+                    .UseConnectionString(FreeSql.DataType.MySql, @"server=172.17.0.1;port=3306;database=TaskDB;uid=root;pwd=123123;")
+                    //.UseMonitorCommand(cmd => Console.WriteLine($"Sql：{cmd.CommandText}"))//监听SQL语句
+                    //.UseAutoSyncStructure(true) //自动同步实体结构到数据库，FreeSql不会扫描程序集，只有CRUD时才会生成表。
                     .Build();
 
                 return fsql;
@@ -95,6 +97,8 @@ namespace Worker
                     context.Request.EnableBuffering();
                     await next(context);
                 }));
+
+            app.UseWebSockets();
 
 
             app.UseEndpoints(endpoints =>

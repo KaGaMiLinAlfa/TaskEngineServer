@@ -38,7 +38,9 @@ namespace LogManager
 
         public static int TaskId { get; set; }
 
-        static string connectionString = "server=localhost;port=3306;database=TaskDB;uid=root;pwd=123123;";
+        //static string connectionString = "server=localhost;port=3306;database=TaskDB;uid=root;pwd=123123;";
+        public const string connectionString = "server=172.17.0.1;port=3306;database=TaskDB;uid=root;pwd=123123;";
+
 
         static IFreeSql fsql = new FreeSql.FreeSqlBuilder()
     .UseConnectionString(FreeSql.DataType.MySql, connectionString)

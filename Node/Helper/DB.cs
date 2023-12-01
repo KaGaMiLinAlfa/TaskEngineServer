@@ -6,7 +6,7 @@ namespace Node.Helper
 {
     public class DB
     {
-        public const string connectionString = "server=localhost;port=3306;database=TaskDB;uid=root;pwd=123123;";
+        public const string connectionString = "server=172.17.0.1;port=3306;database=TaskDB;uid=root;pwd=123123;";
 
         public static IFreeSql FSql = new FreeSql.FreeSqlBuilder()
             .UseConnectionString(FreeSql.DataType.MySql, connectionString)

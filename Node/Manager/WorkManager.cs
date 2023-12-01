@@ -78,7 +78,7 @@ namespace Node.Manager
 
             if (update <= 0)
             {
-                Console.WriteLine("更新状态失败");
+                Console.WriteLine($"更新状态失败;Id:{taskInfoMode.Id}");
                 return;
             }
 
