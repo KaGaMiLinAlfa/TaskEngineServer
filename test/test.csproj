@@ -13,6 +13,7 @@
   <ItemGroup>
     <ProjectReference Include="..\LogManager\LogManager.csproj" />
     <ProjectReference Include="..\SDK\SDK.csproj" />
+    <ProjectReference Include="..\Task\Task.csproj" />
   </ItemGroup>
 
 </Project>

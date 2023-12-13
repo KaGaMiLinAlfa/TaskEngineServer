@@ -104,7 +104,8 @@ namespace Node.Manager
 
         public void Cancel()
         {
-            TaskProcess.Kill();
+            if (TaskProcess != null)
+                TaskProcess.Kill();
             IsRunning = false;
         }
 

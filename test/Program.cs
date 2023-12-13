@@ -14,6 +14,7 @@ using static Google.Protobuf.WellKnownTypes.Field.Types;
 using System.Security.Policy;
 using System.Threading;
 using System.Xml.Linq;
+using Task.Other;
 
 namespace test
 {
@@ -47,17 +48,17 @@ namespace test
 
             //Console.WriteLine("over");
 
-            AppDomain.CurrentDomain.AssemblyResolve += ResolveAssembly;
-            AppDomain.CurrentDomain.TypeResolve += CurrentDomain_TypeResolve;
+            //AppDomain.CurrentDomain.AssemblyResolve += ResolveAssembly;
+            //AppDomain.CurrentDomain.TypeResolve += CurrentDomain_TypeResolve;
 
-            var assembly2 = Assembly.LoadFrom("D:\\MiDuo\\Code\\TaskEngineServer\\ClassLibrary2\\bin\\Release\\netcoreapp3.1\\publish\\System.Text.Encoding.CodePages.dll");
-            var assembly = Assembly.LoadFrom("D:\\MiDuo\\Code\\TaskEngineServer\\ClassLibrary2\\bin\\Release\\netcoreapp3.1\\publish\\ClassLibrary2.dll");
-            var type = assembly.GetType("ClassLibrary2.Class1");
-            object obj = Activator.CreateInstance(type);
-            MethodInfo method = type.GetMethod("Run");
-            method.Invoke(obj, null);
+            //var assembly2 = Assembly.LoadFrom("D:\\MiDuo\\Code\\TaskEngineServer\\ClassLibrary2\\bin\\Release\\netcoreapp3.1\\publish\\System.Text.Encoding.CodePages.dll");
+            //var assembly = Assembly.LoadFrom("D:\\MiDuo\\Code\\TaskEngineServer\\ClassLibrary2\\bin\\Release\\netcoreapp3.1\\publish\\ClassLibrary2.dll");
+            //var type = assembly.GetType("ClassLibrary2.Class1");
+            //object obj = Activator.CreateInstance(type);
+            //MethodInfo method = type.GetMethod("Run");
+            //method.Invoke(obj, null);
 
-
+            new TimingRequestTask().Run();
 
 
         }

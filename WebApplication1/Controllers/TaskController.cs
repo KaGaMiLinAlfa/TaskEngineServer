@@ -113,6 +113,7 @@ namespace Worker2.Controllers
                 Category = input.Category,
                 Config = string.Empty,
                 Stats = 1,
+                Remark = input.Remark ?? "",
             });
 
             return new GlobalResultModel { Data = await insert.ExecuteIdentityAsync() };

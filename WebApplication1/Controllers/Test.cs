@@ -104,11 +104,14 @@ namespace Worker2.Controllers
             return new string(randomArray);
         }
 
-
-        [Route("getFileById")]
-        public FileResult getFileById(int fileId)
+        [HttpGet]
+        public FileResult PhysicalFileTest()
         {
-            return PhysicalFile($"C:/movies/", "application/octet-stream", enableRangeProcessing: true);
+            return PhysicalFile($@"C:\Users\KaGaMi\Desktop\12-1.mp4", "application/octet-stream", enableRangeProcessing: true);
         }
+
+
+
+
     }
 }
