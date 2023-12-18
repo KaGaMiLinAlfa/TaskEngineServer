@@ -68,7 +68,7 @@ namespace Worker2.Controllers
                 query = query.Where(x => input.LogLevels.Contains(x.Level));
 
             if (!string.IsNullOrEmpty(input.Content))
-                query = query.Where(x => input.Content.Contains(x.Message));
+                query = query.Where(x => x.Message.Contains(input.Content));
 
             var total = query.CountAsync();
             var list = query.OrderByDescending(x => x.Id).Page(input.PageIndex, input.PageSize).ToListAsync();

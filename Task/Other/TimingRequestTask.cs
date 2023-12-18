@@ -15,7 +15,11 @@ namespace Task.Other
         public override void Run()
         {
             var resultStr = Get($"{OnlineDomain}/manager/ResendBrandRedPacket");
-            LogHelper.Info($"返回信息:{resultStr}");
+
+            if (resultStr == "重发0条")
+                LogHelper.Info($"没有重发数据");
+            else
+                LogHelper.Warn($"返回信息:{resultStr}");
         }
 
         public static string OnlineDomain = "http://10.66.199.20:10099";

@@ -161,7 +161,7 @@ namespace Node.Manager
             Worker.Add(newTask.Id, jobModel);
             scheduler.ScheduleJob(job, trigger);
 
-            Console.WriteLine($"装载任务:{newTask.Id}");
+            Console.WriteLine($"装载任务:Id:{newTask.Id}");
 
             newTask.Stats = 2;
             DB.FSql.Update<TaskInfo>().Set(x => new TaskInfo
