@@ -3,6 +3,7 @@ using System;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Timers;
+using Node.Helper;
 
 namespace Node
 {
@@ -18,7 +19,7 @@ namespace Node
 
             //args = new string[] { "Worker","11", "D:\\MiDuo\\Code\\TaskEngineServer\\Task\\bin\\Release\\netcoreapp3.1\\publish\\Task.dll", "Task.CodeHandle.CodeHandleService" };
 
-
+            Console.WriteLine("链接数据库:"+DB.connectionString);
 
             await Console.Out.WriteLineAsync($"args:{string.Join(",", args)}");
             if (args.FirstOrDefault() == "Worker")

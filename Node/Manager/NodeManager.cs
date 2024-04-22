@@ -40,7 +40,6 @@ namespace Node.Manager
 
         public async Task RunAsync()
         {
-
             while (true)
             {
                 try
@@ -91,10 +90,15 @@ namespace Node.Manager
             foreach (var item in stopTask)
                 switch (item.Stats)
                 {
-                    case 4: Worker[item.Id].WaitingToStop = true; UnInstallWorker(item); break;
-                    case 5: Worker[item.Id].NeedAbort = true; UnInstallWorker(item); break;
+                    case 4:
+                        Worker[item.Id].WaitingToStop = true;
+                        UnInstallWorker(item);
+                        break;
+                    case 5:
+                        Worker[item.Id].NeedAbort = true;
+                        UnInstallWorker(item);
+                        break;
                 }
-
 
 
             //卸载Worker已经停止的任务
@@ -115,24 +119,23 @@ namespace Node.Manager
 
             foreach (var item in Worker)
                 Console.WriteLine($"任务ID: {item.Key} 为 {item.Value.TaskInfo.Stats} 状态");
-
         }
 
         public void UnInstallWorker(TaskInfo taskInfo)
         {
             switch (taskInfo.Stats)
             {
-                case 4: Worker[taskInfo.Id].WaitingToStop = true; break;
-                case 5: Worker[taskInfo.Id].NeedAbort = true; break;
+                case 4:
+                    Worker[taskInfo.Id].WaitingToStop = true;
+                    break;
+                case 5:
+                    Worker[taskInfo.Id].NeedAbort = true;
+                    break;
             }
 
             //没启动的话,直接卸载
             if (Worker[taskInfo.Id].TaskInfo.Stats == 2)
                 RemoveJob(Worker[taskInfo.Id]);
-
-
-
-
         }
 
         public void AddJob(TaskInfo newTask)
@@ -141,6 +144,7 @@ namespace Node.Manager
             var trigger = TriggerBuilder.Create().WithIdentity(newTask.TaskId, NodeId)
                 .WithCronSchedule(newTask.Cron, x => x.WithMisfireHandlingInstructionDoNothing())
                 .Build();
+
 
             var taskDllPath = $"{ZipHelper.GetTaskDllPath(newTask.PackageUrl, Path.Combine(DLLSavePath, $"V{newTask.PackageId}-{newTask.Id}"))}";
 
@@ -153,7 +157,6 @@ namespace Node.Manager
             };
 
 
-
             //if (string.IsNullOrEmpty(jobModel.TaskDllPath))
             //需要写上上传包没有dll文件的报错日志;
 
@@ -164,10 +167,14 @@ namespace Node.Manager
             Console.WriteLine($"装载任务:Id:{newTask.Id}");
 
             newTask.Stats = 2;
-            DB.FSql.Update<TaskInfo>().Set(x => new TaskInfo
+            var updateCount = DB.FSql.Update<TaskInfo>().Set(x => new TaskInfo
             {
                 Stats = 2,
             }).Where(x => x.Id == newTask.Id && x.Stats == 6).ExecuteAffrows();
+            if (updateCount > 0)
+                Console.WriteLine($"修改任务ID:{newTask.Id} 状态为2");
+
+            var a = 10;
         }
 
         public void RemoveJob(QuartzModel quartzModel)
@@ -220,8 +227,17 @@ namespace Node.Manager
 
         private List<TaskInfo> GetNodeTasksInfo()
         {
-            return DB.FSql.Select<TaskInfo>().Where(x => x.Id > 0).ToList();
+            var taskList = DB.FSql.Select<TaskInfo>().Where(x => x.Id > 0).ToList();
             //return new List<TaskInfo>();
+
+            var packageIds = taskList.Select(s => s.PackageId).ToList();
+            var packageList = DB.FSql.Select<TaskPackageInfo>().Where(x => packageIds.Contains(x.Id)).ToList();
+
+            foreach (var task in taskList)
+                task.PackageUrl = packageList.FirstOrDefault(x => x.Id == task.PackageId)?.PackageUrl ?? task.PackageUrl;
+
+
+            return taskList;
         }
 
         private List<int> GetAllTasksPackageId()
@@ -229,6 +245,7 @@ namespace Node.Manager
             return DB.FSql.Select<TaskInfo>().Where(x => x.Id > 0).ToList(s => s.PackageId);
             //return new List<int>();
         }
+
         private void UpdateTaskStats(int id, int stats)
         {
             DB.FSql.Update<TaskInfo>().Set(x => new TaskInfo
@@ -256,7 +273,6 @@ namespace Node.Manager
         public TaskInfo TaskInfo { get; set; }
 
 
-
         public bool WaitingToStop { get; set; }
         public bool NeedAbort { get; set; }
         public bool IsStop { get; set; }
@@ -264,7 +280,6 @@ namespace Node.Manager
         public Timer timer { get; set; }
 
         public IExecutePackageAction Executer { get; set; }
-
 
 
         private void TaskHeartbeatTime(object sender)
@@ -280,7 +295,6 @@ namespace Node.Manager
             }
             catch (Exception ex)
             {
-
                 Console.WriteLine("Worker Heartbeat 数据库异常");
             }
 
@@ -308,10 +322,6 @@ namespace Node.Manager
                 if (timer != null)
                     timer.Dispose();
             }
-
-
         }
-
     }
-
 }

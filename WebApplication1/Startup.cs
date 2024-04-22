@@ -37,8 +37,8 @@ namespace Worker
                     fsql = new FreeSql.FreeSqlBuilder()
                    .UseConnectionString(FreeSql.DataType.MySql, @"server=localhost;port=3306;database=TaskDB;uid=root;pwd=123123;")
                    //.UseConnectionString(FreeSql.DataType.MySql, @"server=172.17.0.1;port=3306;database=TaskDB;uid=root;pwd=123123;")
-                   //.UseMonitorCommand(cmd => Console.WriteLine($"Sql£º{cmd.CommandText}"))//¼àÌıSQLÓï¾ä
-                   //.UseAutoSyncStructure(true) //×Ô¶¯Í¬²½ÊµÌå½á¹¹µ½Êı¾İ¿â£¬FreeSql²»»áÉ¨Ãè³ÌĞò¼¯£¬Ö»ÓĞCRUDÊ±²Å»áÉú³É±í¡£
+                   //.UseMonitorCommand(cmd => Console.WriteLine($"Sqlï¼š{cmd.CommandText}"))//ç›‘å¬SQLè¯­å¥
+                   //.UseAutoSyncStructure(true) //è‡ªåŠ¨åŒæ­¥å®ä½“ç»“æ„åˆ°æ•°æ®åº“ï¼ŒFreeSqlä¸ä¼šæ‰«æç¨‹åºé›†ï¼Œåªæœ‰CRUDæ—¶æ‰ä¼šç”Ÿæˆè¡¨ã€‚
                    .Build();
                 else
                     fsql = new FreeSql.FreeSqlBuilder()
@@ -70,7 +70,7 @@ namespace Worker
                 configure.SerializerSettings.ContractResolver = new DefaultContractResolver();
             });
 
-            //½ûÓÃÄ¬ÈÏĞĞÎª
+            //ç¦ç”¨é»˜è®¤è¡Œä¸º
             services.Configure<ApiBehaviorOptions>(options =>
             {
                 options.SuppressModelStateInvalidFilter = true;
